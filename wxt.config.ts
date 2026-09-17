@@ -7,4 +7,8 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
+  manifest: {
+    permissions: ['storage', 'activeTab', 'scripting', 'sidePanel'],
+    host_permissions: ['*://class.utp.edu.pe/*'],
+  },
 });
