@@ -1,5 +1,15 @@
+# Dependencies
+node_modules/
+
+# WXT generated files and build output
+.wxt/
+.output/
+dist/
+stats.html
+stats-*.json
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,17 +17,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.output
-stats.html
-stats-*.json
-.wxt
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Test and coverage output
+coverage/
+
+# Optional local Web Extension tooling
 web-ext.config.ts
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
