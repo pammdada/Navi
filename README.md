@@ -1,3 +1,16 @@
-# WXT + React
+# Navi - Extensión de accesibilidad para UTP Class
 
-This template should help get you started developing with React in WXT.
+Extensión WXT + React para `class.utp.edu.pe`. Incluye barra lateral de accesibilidad, lectura por voz, comandos de voz, alto contraste, tamaño de texto, modo simplificado y activación de pistas de subtítulos disponibles.
+
+## Desarrollo
+
+```bash
+npm run dev
+```
+
+## Verificación
+
+```bash
+npm run compile
+npm run build
+```

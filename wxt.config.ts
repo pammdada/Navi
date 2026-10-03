@@ -8,7 +8,9 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    permissions: ['storage', 'activeTab', 'scripting', 'sidePanel'],
+    name: 'Navi - Accesibilidad para UTP Class',
+    description: 'Asistente de accesibilidad para estudiantes de UTP Class.',
+    permissions: ['storage', 'activeTab', 'scripting', 'sidePanel', 'tabs'],
     host_permissions: ['*://class.utp.edu.pe/*'],
   },
 });

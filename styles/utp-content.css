@@ -1,0 +1,8 @@
+html[data-navi-font-size='large'] { font-size: 112.5% !important; }
+html[data-navi-font-size='x-large'] { font-size: 125% !important; }
+html.navi-high-contrast, html.navi-high-contrast body { background: #000 !important; color: #fff !important; }
+html.navi-high-contrast * { background-color: #000 !important; color: #fff !important; border-color: #fff !important; box-shadow: none !important; }
+html.navi-high-contrast a, html.navi-high-contrast button { color: #ffeb3b !important; text-decoration: underline !important; }
+html.navi-high-contrast :focus-visible { outline: 4px solid #00e5ff !important; outline-offset: 3px !important; }
+html.navi-simplified-mode aside, html.navi-simplified-mode [role='complementary'], html.navi-simplified-mode .sidebar, html.navi-simplified-mode .drawer, html.navi-simplified-mode .advertisement { display: none !important; }
+html.navi-simplified-mode main, html.navi-simplified-mode [role='main'] { max-width: 940px !important; margin-inline: auto !important; line-height: 1.75 !important; }
