@@ -1,16 +1,57 @@
-import { useEffect, useState } from 'react';
-import { accessibilityPreferences, defaultPreferences, type AccessibilityPreferences, type FontSize } from '@/utils/storage';
+import { AccessibilityButton } from './components/AccessibilityButton';
+import { AppShell } from './components/AppShell';
+import { StatusToast } from './components/StatusToast';
+import { Onboarding } from './onboarding/Onboarding';
+import { useHashRoute, type RouteId } from './routes';
+import { NaviProvider, useNavi } from './state';
+import { HelpView } from './views/HelpView';
+import { HomeView } from './views/HomeView';
+import { MediaView } from './views/MediaView';
+import { ReadingView } from './views/ReadingView';
+import { SettingsView } from './views/SettingsView';
+import { VoiceView } from './views/VoiceView';
+
+const views: Record<RouteId, () => React.JSX.Element> = {
+  inicio: HomeView,
+  lectura: ReadingView,
+  voz: VoiceView,
+  multimedia: MediaView,
+  configuracion: SettingsView,
+  ayuda: HelpView,
+};
+
+function CentroNavi() {
+  const { ready, profile } = useNavi();
+  const [route] = useHashRoute();
+
+  if (!ready) {
+    return (
+      <p role="status" className="grid min-h-dvh place-items-center text-xl font-bold">
+        Cargando Navi…
+      </p>
+    );
+  }
+
+  const View = views[route];
+  return (
+    <>
+      {profile.onboardingCompleted ? (
+        <AppShell route={route}>
+          <View key={route} />
+        </AppShell>
+      ) : (
+        <Onboarding />
+      )}
+      <StatusToast />
+      <AccessibilityButton />
+    </>
+  );
+}
 
 export default function Options() {
-  const [preferences, setPreferences] = useState<AccessibilityPreferences>(defaultPreferences);
-  const [saved, setSaved] = useState(false);
-  useEffect(() => { void accessibilityPreferences.getValue().then(setPreferences); }, []);
-  const update = <K extends keyof AccessibilityPreferences>(key: K, value: AccessibilityPreferences[K]) => setPreferences((current) => ({ ...current, [key]: value }));
-  const save = async () => { await accessibilityPreferences.setValue(preferences); setSaved(true); window.setTimeout(() => setSaved(false), 2500); };
-  const quickProfile = (profile: 'vision' | 'simple' | 'voice') => {
-    if (profile === 'vision') setPreferences((p) => ({ ...p, highContrast: true, fontSize: 'x-large' }));
-    if (profile === 'simple') setPreferences((p) => ({ ...p, simplifiedMode: true, fontSize: 'large' }));
-    if (profile === 'voice') setPreferences((p) => ({ ...p, voiceEnabled: true, speechRate: 0.9 }));
-  };
-  return <main className="options-page"><header><div className="options-logo" aria-hidden="true">N</div><div><h1>Configuración de Navi</h1><p>Personaliza UTP Class según tus necesidades.</p></div></header><section className="options-card" aria-labelledby="quick-title"><h2 id="quick-title">Accesibilidad rápida</h2><div className="profile-grid"><button onClick={() => quickProfile('vision')}>Texto grande y contraste</button><button onClick={() => quickProfile('simple')}>Interfaz simplificada</button><button onClick={() => quickProfile('voice')}>Asistencia por voz</button></div></section><section className="options-card" aria-labelledby="reading-title"><h2 id="reading-title">Lectura de información</h2><label>Tamaño de texto<select value={preferences.fontSize} onChange={(event) => update('fontSize', event.target.value as FontSize)}><option value="normal">Normal</option><option value="large">Grande</option><option value="x-large">Muy grande</option></select></label><label className="check-row"><input type="checkbox" checked={preferences.highContrast} onChange={(event) => update('highContrast', event.target.checked)} /> Alto contraste</label><label>Velocidad de lectura: {preferences.speechRate.toFixed(1)}<input type="range" min="0.6" max="1.4" step="0.1" value={preferences.speechRate} onChange={(event) => update('speechRate', Number(event.target.value))} /></label></section><section className="options-card" aria-labelledby="voice-title"><h2 id="voice-title">Asistente de voz</h2><label className="check-row"><input type="checkbox" checked={preferences.voiceEnabled} onChange={(event) => update('voiceEnabled', event.target.checked)} /> Activar comandos de voz</label><p>Los comandos requieren permiso de micrófono del navegador.</p></section><section className="options-card" aria-labelledby="accessibility-title"><h2 id="accessibility-title">Configuración de accesibilidad</h2><label className="check-row"><input type="checkbox" checked={preferences.captionsEnabled} onChange={(event) => update('captionsEnabled', event.target.checked)} /> Activar subtítulos disponibles</label><label className="check-row"><input type="checkbox" checked={preferences.simplifiedMode} onChange={(event) => update('simplifiedMode', event.target.checked)} /> Modo simplificado</label></section><button className="save-button" type="button" onClick={() => void save()}>Guardar configuración</button>{saved && <p className="saved" role="status">Configuración guardada correctamente.</p>}</main>;
+  return (
+    <NaviProvider>
+      <CentroNavi />
+    </NaviProvider>
+  );
 }

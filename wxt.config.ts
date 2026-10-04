@@ -10,6 +10,8 @@ export default defineConfig({
   manifest: {
     name: 'Navi - Accesibilidad para UTP Class',
     description: 'Asistente de accesibilidad para estudiantes de UTP Class.',
+    // Sin popup: al pulsar el ícono se abre el panel lateral (ver background.ts).
+    action: { default_title: 'Abrir Navi' },
     permissions: ['storage', 'activeTab', 'scripting', 'sidePanel', 'tabs'],
     host_permissions: ['*://class.utp.edu.pe/*'],
   },

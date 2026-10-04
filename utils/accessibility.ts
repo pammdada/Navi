@@ -4,5 +4,6 @@ export function applyAccessibilityPreferences(preferences: AccessibilityPreferen
   const root = document.documentElement;
   root.classList.toggle('navi-high-contrast', preferences.highContrast);
   root.classList.toggle('navi-simplified-mode', preferences.simplifiedMode);
+  root.classList.toggle('navi-reduce-motion', Boolean(preferences.reduceMotion));
   root.dataset.naviFontSize = preferences.fontSize;
 }

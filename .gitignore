@@ -38,3 +38,5 @@ web-ext.config.ts
 *.njsproj
 *.sln
 *.sw?
+.docs/*
+claude.md

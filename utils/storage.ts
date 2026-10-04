@@ -11,6 +11,7 @@ export interface AccessibilityPreferences {
   speechRate: number;
   volume: number;
   voiceEnabled: boolean;
+  reduceMotion: boolean;
   language: string;
 }
 
@@ -22,6 +23,7 @@ export const defaultPreferences: AccessibilityPreferences = {
   speechRate: 1,
   volume: 1,
   voiceEnabled: true,
+  reduceMotion: false,
   language: 'es-PE',
 };
 
@@ -29,6 +31,26 @@ export const accessibilityPreferences = storage.defineItem<AccessibilityPreferen
   'sync:accessibility-preferences',
   { fallback: defaultPreferences },
 );
+
+export type NeedProfile = 'visual' | 'auditiva' | 'motora' | 'cognitiva' | 'mayor';
+
+export interface UserProfile {
+  name: string;
+  needs: NeedProfile[];
+  onboardingCompleted: boolean;
+  onboardingStep: number;
+}
+
+export const defaultUserProfile: UserProfile = {
+  name: '',
+  needs: [],
+  onboardingCompleted: false,
+  onboardingStep: 0,
+};
+
+export const userProfile = storage.defineItem<UserProfile>('sync:user-profile', {
+  fallback: defaultUserProfile,
+});
 
 export const idioma = storage.defineItem<string>('sync:idioma', {
   fallback: 'es',

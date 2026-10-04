@@ -1,0 +1,138 @@
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+@import 'tailwindcss';
+
+/* Tokens de color. Los nombres describen su función, así el modo de alto contraste solo redefine variables. */
+@theme {
+  --font-sans: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
+
+  --color-canvas: #f3f5fb;
+  --color-surface: #ffffff;
+  --color-tint: #eef2ff;
+  --color-ink: #0f1b33;
+  --color-ink-soft: #3d4b66;
+  --color-line: #6f7d98;
+  --color-line-soft: #d5dceb;
+  --color-brand: #1e3a8a;
+  --color-brand-strong: #172e6e;
+  --color-on-brand: #ffffff;
+  --color-brand-soft: #e0e7ff;
+  --color-accent: #f59e0b;
+  --color-focus: #b45309;
+  --color-success: #166534;
+  --color-success-soft: #dcfce7;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+}
+
+/* Alto contraste: texto blanco y amarillo sobre negro (más de 7:1, nivel AAA). */
+html.navi-high-contrast {
+  --color-canvas: #000000;
+  --color-surface: #000000;
+  --color-tint: #0d0d0d;
+  --color-ink: #ffffff;
+  --color-ink-soft: #ffffff;
+  --color-line: #ffffff;
+  --color-line-soft: #ffffff;
+  --color-brand: #ffe600;
+  --color-brand-strong: #fff27a;
+  --color-on-brand: #000000;
+  --color-brand-soft: #1a1a00;
+  --color-accent: #ffe600;
+  --color-focus: #00e5ff;
+  --color-success: #7dffa1;
+  --color-success-soft: #000000;
+  --color-danger: #ff8a8a;
+  --color-danger-soft: #000000;
+  --logo-bg: #000000;
+  --logo-fg: #ffffff;
+  --logo-accent: #ffe600;
+}
+
+html.navi-high-contrast .logo-frame {
+  outline: 2px solid #ffffff;
+  border-radius: 18px;
+}
+
+/* Tamaño de letra: todo el diseño usa rem, así que escala completo. */
+html {
+  font-size: 100%;
+  scroll-padding-block: 6rem;
+}
+html[data-navi-font-size='large'] {
+  font-size: 118.75%;
+}
+html[data-navi-font-size='x-large'] {
+  font-size: 137.5%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco siempre visible y grueso (WCAG 2.4.7 / 2.4.13). */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* El modo simplificado oculta contenido secundario. */
+html.navi-simplified-mode .simplifiable {
+  display: none !important;
+}
+
+/* Reducir movimiento: por preferencia del sistema o desde Navi. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+html.navi-reduce-motion *,
+html.navi-reduce-motion *::before,
+html.navi-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+@keyframes navi-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: navi-rise 0.35s ease-out both;
+}
+
+@keyframes navi-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-danger) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+.animate-listening {
+  animation: navi-pulse 1.4s ease-in-out infinite;
+}
+
+dialog::backdrop {
+  background: rgb(15 27 51 / 60%);
+}
+html.navi-high-contrast dialog::backdrop {
+  background: rgb(0 0 0 / 85%);
+}
