@@ -40,3 +40,7 @@ web-ext.config.ts
 *.sw?
 .docs/*
 claude.md
+
+# Instrucciones locales de Claude Code
+CLAUDE.md
+.claude/
