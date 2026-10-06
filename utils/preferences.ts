@@ -45,8 +45,8 @@ export function mergePreferences(current: AccessibilityPreferences, updates: Par
 export const colorModes: { id: ColorVisionMode; label: string; short: string; description: string }[] = [
   { id: 'standard', label: 'Estándar', short: 'Estándar', description: 'Los colores originales de UTP Class.' },
   { id: 'high-contrast', label: 'Alto contraste', short: 'Contraste', description: 'Texto blanco y amarillo sobre fondo negro.' },
-  { id: 'red-green-safe', label: 'Sin rojo ni verde', short: 'Rojo/verde', description: 'Azul y naranja oscuro; evita depender del rojo y el verde (protanopía y deuteranopía).' },
-  { id: 'blue-yellow-safe', label: 'Sin azul ni amarillo', short: 'Azul/amarillo', description: 'Magenta y turquesa oscuro; evita depender del azul y el amarillo (tritanopía).' },
+  { id: 'red-green-safe', label: 'Rojo y verde (protanopía y deuteranopía)', short: 'Rojo/verde', description: 'Los verdes de la página pasan a azul verdoso, así el verde ya no se confunde con el rojo ni con el naranja. Rojo, naranja, amarillo y azul no cambian.' },
+  { id: 'blue-yellow-safe', label: 'Azul y amarillo (tritanopía)', short: 'Azul/amarillo', description: 'Los azules y cianes de la página pasan a magenta, así el azul ya no se confunde con el verde. Verde, rojo y amarillo no cambian.' },
 ];
 
 export const colorModeLabel = (mode: ColorVisionMode): string => colorModes.find((item) => item.id === mode)?.label ?? 'Estándar';

@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Square, Volume2, type LucideIcon } from 'lucide-react';
 import { speakWithPreferences, stopSpeaking } from '@/utils/speech/synthesis';
 import { fontSizeLabels, fontSizeOrder } from '@/utils/profiles';
+import { previewSamples } from '@/utils/color-vision';
 import { colorModes } from '@/utils/preferences';
 import type { ColorVisionMode, FontSize } from '@/utils/storage';
 import { useNavi } from '../state';
@@ -190,40 +191,51 @@ export function RangeField({ label, value, min, max, step, onChange, format, min
 export const formatRate = (value: number) => `${value.toLocaleString('es-PE', { minimumFractionDigits: 1 })}×`;
 export const formatPercent = (value: number) => `${Math.round(value * 100)} %`;
 
-const swatches: Record<ColorVisionMode, [string, string]> = {
-  standard: ['#1e3a8a', '#f59e0b'],
-  'high-contrast': ['#000000', '#ffe600'],
-  'red-green-safe': ['#0b4f9e', '#8a4b00'],
-  'blue-yellow-safe': ['#a3004a', '#006b6b'],
-};
-
-/** Paletas para daltonismo. La muestra de colores es decorativa: cada opción se describe con palabras. */
+/**
+ * Paletas para daltonismo. Cada opción muestra cómo quedan cuatro colores típicos de una interfaz, calculados con el
+ * mismo motor que usa la página, y lo dice con palabras (la muestra es decorativa).
+ */
 export function ColorModePicker({ value, onChange }: { value: ColorVisionMode; onChange: (value: ColorVisionMode) => void }) {
   const name = useId();
   return (
     <fieldset>
       <legend className="mb-1 text-lg font-bold">Paleta de colores en UTP Class</legend>
-      <p className="mb-3 text-ink-soft">No es un filtro: Navi cambia los colores de enlaces, botones y estados, y agrega ícono y texto a “Pendiente” y “Completada”.</p>
+      <p className="mb-3 text-ink-soft">No es un filtro: Navi cambia los matices que tu tipo de visión confunde (texto, fondos, bordes y gráficos) y mantiene el contraste. Las fotos y los videos no se modifican.</p>
       <div className="grid gap-3 md:grid-cols-2">
-        {colorModes.map((mode) => (
-          <label
-            key={mode.id}
-            className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-line-soft bg-surface p-3 hover:border-line has-checked:border-brand has-checked:bg-brand-soft has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-focus"
-          >
-            <input type="radio" name={name} value={mode.id} checked={value === mode.id} onChange={() => onChange(mode.id)} className="sr-only" />
-            <span className="mt-1 flex shrink-0 overflow-hidden rounded-lg border-2 border-line" aria-hidden="true">
-              <span className="block h-8 w-6" style={{ background: swatches[mode.id][0] }} />
-              <span className="block h-8 w-6" style={{ background: swatches[mode.id][1] }} />
-            </span>
-            <span>
-              <span className="block text-lg font-bold">
-                {mode.label}
-                {value === mode.id && <span className="ml-2 text-sm font-bold text-brand">· Elegida</span>}
+        {colorModes.map((mode) => {
+          const samples = previewSamples(mode.id);
+          return (
+            <label
+              key={mode.id}
+              className="flex cursor-pointer flex-col gap-3 rounded-xl border-2 border-line-soft bg-surface p-3 hover:border-line has-checked:border-brand has-checked:bg-brand-soft has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-focus"
+            >
+              <input type="radio" name={name} value={mode.id} checked={value === mode.id} onChange={() => onChange(mode.id)} className="sr-only" />
+              <span>
+                <span className="block text-lg font-bold">
+                  {mode.label}
+                  {value === mode.id && <span className="ml-2 text-sm font-bold text-brand">· Elegida</span>}
+                </span>
+                <span className="block text-ink-soft">{mode.description}</span>
               </span>
-              <span className="block text-ink-soft">{mode.description}</span>
-            </span>
-          </label>
-        ))}
+              {mode.id !== 'standard' && mode.id !== 'high-contrast' && (
+                <span className="flex flex-wrap gap-x-4 gap-y-2" aria-hidden="true">
+                  {samples.map((sample) => (
+                    <span key={sample.id} className="flex items-center gap-1.5 text-sm font-bold">
+                      <span className="block size-6 rounded-md border-2 border-line" style={{ background: sample.before }} />
+                      {sample.before !== sample.after && (
+                        <>
+                          →
+                          <span className="block size-6 rounded-md border-2 border-line" style={{ background: sample.after }} />
+                        </>
+                      )}
+                      {sample.label}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </label>
+          );
+        })}
       </div>
     </fieldset>
   );

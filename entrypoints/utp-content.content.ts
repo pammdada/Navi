@@ -1,6 +1,7 @@
 import '@/styles/utp-content.css';
 import { applyAccessibilityPreferences } from '@/utils/accessibility';
 import { setCaptions } from '@/utils/captions';
+import { setColorVisionMode } from '@/utils/page-colors';
 import { watchPage, enhancePage } from '@/utils/page-enhancer';
 import { isLensOpen, toggleLens } from '@/utils/page-lens';
 import { buildReadingPlan, clearReadingMarks, highlightReadingUnit } from '@/utils/page-reader';
@@ -36,6 +37,7 @@ export default defineContentScript({
     const applyPreferences = async () => {
       const preferences = normalizePreferences(await accessibilityPreferences.getValue());
       applyAccessibilityPreferences(preferences);
+      setColorVisionMode(preferences.colorVisionMode);
       enhancePage();
       // Los subtítulos siguen al ajuste desde cualquier pantalla; no se tocan si el usuario nunca los activó.
       if (preferences.captionsEnabled !== captionsApplied && !(captionsApplied === null && !preferences.captionsEnabled)) {

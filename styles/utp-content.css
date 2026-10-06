@@ -16,31 +16,36 @@ html.navi-high-contrast ::placeholder { color: #ddd !important; opacity: 1 !impo
 html.navi-high-contrast :focus-visible { outline: 4px solid #00e5ff !important; outline-offset: 3px !important; }
 
 /* ---------- Paletas para daltonismo ----------
-   No es un filtro: se cambian los colores de enlaces, botones, foco y estados por combinaciones que no dependen
-   de los tonos que cada tipo de visión confunde, y los estados llevan siempre ícono + texto. */
+   Los colores de la página (texto, fondos, bordes, SVG) los cambia utils/page-colors.ts con JavaScript, porque solo ahí se
+   puede girar el matiz de cada color real sin perder contraste. Aquí quedan las pistas que NO dependen del color. */
 html[data-navi-color-vision='red-green-safe'] {
-  /* Protanopía / deuteranopía: azul y naranja oscuro. */
-  --navi-link: #0b4f9e; --navi-done: #0b4f9e; --navi-pending: #8a4b00; --navi-late: #8a4b00; --navi-focus: #0b4f9e;
+  /* Verde → azul verdoso; rojo, naranja y amarillo no cambian. */
+  --navi-focus: #0b4f9e;
 }
 html[data-navi-color-vision='blue-yellow-safe'] {
-  /* Tritanopía: magenta oscuro y turquesa oscuro. */
-  --navi-link: #a3004a; --navi-done: #006b6b; --navi-pending: #a3004a; --navi-late: #a3004a; --navi-focus: #a3004a;
+  /* Azul y cian → magenta; verde, rojo y amarillo no cambian. */
+  --navi-focus: #a3004a;
 }
-html[data-navi-color-vision='red-green-safe'] a, html[data-navi-color-vision='blue-yellow-safe'] a { color: var(--navi-link) !important; text-decoration: underline !important; }
-html[data-navi-color-vision='red-green-safe'] button, html[data-navi-color-vision='red-green-safe'] [role='button'],
-html[data-navi-color-vision='blue-yellow-safe'] button, html[data-navi-color-vision='blue-yellow-safe'] [role='button'] { color: var(--navi-link) !important; border: 2px solid var(--navi-link) !important; }
+/* Un enlace dentro de un texto no puede distinguirse solo por su color: se subraya. */
+html[data-navi-color-vision='red-green-safe'] :is(p, li, td, dd, label, blockquote) a,
+html[data-navi-color-vision='blue-yellow-safe'] :is(p, li, td, dd, label, blockquote) a { text-decoration: underline !important; }
 html[data-navi-color-vision='red-green-safe'] [aria-current='page'], html[data-navi-color-vision='red-green-safe'] [data-active='true'],
-html[data-navi-color-vision='blue-yellow-safe'] [aria-current='page'], html[data-navi-color-vision='blue-yellow-safe'] [data-active='true'] { border: 3px solid var(--navi-link) !important; text-decoration: underline !important; font-weight: 700 !important; }
+html[data-navi-color-vision='blue-yellow-safe'] [aria-current='page'], html[data-navi-color-vision='blue-yellow-safe'] [data-active='true'] { font-weight: 700 !important; text-decoration: underline !important; }
 html[data-navi-color-vision='red-green-safe'] :focus-visible, html[data-navi-color-vision='blue-yellow-safe'] :focus-visible {
   outline: 4px solid var(--navi-focus) !important; outline-offset: 3px !important; box-shadow: 0 0 0 2px #fff !important;
 }
 
-/* Estados (pendiente / completado / vencido) y alertas: Navi les agrega ícono y texto con estas reglas. */
+/* Estados (pendiente / completado / vencido) y alertas: Navi les agrega ícono, texto y subrayado (el color lo cambia page-colors.ts). */
 [data-navi-status]::before { content: attr(data-navi-status-icon) ' '; font-weight: 700; }
-[data-navi-status][data-navi-label]::after { content: ' · ' attr(data-navi-label); font-weight: 700; }
-html[data-navi-color-vision] [data-navi-status='done'] { color: var(--navi-done, inherit) !important; font-weight: 700 !important; }
-html[data-navi-color-vision] [data-navi-status='pending'] { color: var(--navi-pending, inherit) !important; font-weight: 700 !important; border-bottom: 2px dashed currentColor !important; }
-html[data-navi-color-vision] [data-navi-status='late'] { color: var(--navi-late, inherit) !important; font-weight: 700 !important; text-decoration: underline wavy !important; }
+/* Insignias sin texto (solo un punto de color): el ícono y la etiqueta van en una pastilla propia, legible sobre cualquier color. */
+[data-navi-status][data-navi-label]::before { content: none; }
+[data-navi-status][data-navi-label]::after {
+  content: attr(data-navi-status-icon) ' ' attr(data-navi-label); margin-left: 6px; padding: 1px 8px; border: 2px solid #111; border-radius: 999px;
+  background: #fff; color: #111; font: 700 13px/1.4 system-ui, sans-serif; white-space: nowrap; vertical-align: middle;
+}
+html[data-navi-color-vision] [data-navi-status='done'] { font-weight: 700 !important; }
+html[data-navi-color-vision] [data-navi-status='pending'] { font-weight: 700 !important; border-bottom: 2px dashed currentColor !important; }
+html[data-navi-color-vision] [data-navi-status='late'] { font-weight: 700 !important; text-decoration: underline wavy !important; }
 html.navi-high-contrast [data-navi-status] { color: #fff !important; }
 
 /* ---------- Foco visible en la página (WCAG 2.4.7) ---------- */
