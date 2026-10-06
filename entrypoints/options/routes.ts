@@ -15,7 +15,7 @@ export const routes: RouteInfo[] = [
   { id: 'lectura', label: 'Lectura de información', hint: 'Letra, contraste y voz', icon: BookOpenText },
   { id: 'voz', label: 'Asistente de voz', hint: 'Comandos y dictado', icon: Mic },
   { id: 'comandos', label: 'Mis comandos', hint: 'Tus propias frases de voz', icon: WandSparkles },
-  { id: 'multimedia', label: 'Subtítulos y multimedia', hint: 'Subtítulos automáticos', icon: Captions },
+  { id: 'multimedia', label: 'Subtítulos y multimedia', hint: 'Futuros avances', icon: Captions },
   { id: 'configuracion', label: 'Configuración', hint: 'Todos los ajustes y tu perfil', icon: Settings },
   { id: 'ayuda', label: 'Ayuda', hint: 'Atajos, guía y preguntas', icon: LifeBuoy },
 ];

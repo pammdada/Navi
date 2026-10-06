@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ALargeSmall, BookOpen, CalendarDays, Captions, ClipboardCheck, Contrast, FileText, GraduationCap, ListOrdered, Megaphone, MessageCircle, Mic, Palette, Settings, Sparkles, Volume2, ZoomIn, type LucideIcon } from 'lucide-react';
+import { ALargeSmall, BookOpen, CalendarDays,ClipboardCheck, Contrast, FileText, GraduationCap, ListOrdered, Megaphone, MessageCircle, Mic, Palette, Settings, Sparkles, Volume2, ZoomIn, type LucideIcon } from 'lucide-react';
 import { NaviLogo } from '@/components/NaviLogo';
 import { usePreferencesStore } from '@/hooks/use-preferences-store';
 import { runCommand, type CommandContext } from '@/utils/command-runner';
@@ -102,14 +102,6 @@ export default function SidePanel() {
       const reply = await sendToPage<{ enabled: boolean }>({ type: 'NAVI_TOGGLE_LENS' });
       setLens(reply.enabled);
       return reply.enabled ? 'Lupa activada. Pulsa Esc para cerrarla.' : 'Lupa cerrada.';
-    });
-
-  const toggleCaptions = () =>
-    guard(async () => {
-      const enabled = !prefsRef.current.captionsEnabled;
-      await update({ captionsEnabled: enabled });
-      const result = await sendToPage<{ message: string }>({ type: 'NAVI_APPLY_CAPTIONS', enabled });
-      return result.message;
     });
 
   const commandContext = (): CommandContext => ({
@@ -233,7 +225,6 @@ export default function SidePanel() {
               setStatus(`Colores: ${colorModeLabel(next)}.`);
             }}
           />
-          <PanelButton icon={Captions} label="Video" hint={`CC ${state(preferences.captionsEnabled).toLowerCase()}`} pressed={preferences.captionsEnabled} onClick={() => void toggleCaptions()} />
           <PanelButton icon={Sparkles} label="Simple" hint={state(preferences.simplifiedMode)} pressed={preferences.simplifiedMode} onClick={() => void update({ simplifiedMode: !prefsRef.current.simplifiedMode })} />
           <PanelButton icon={FileText} label="Resumen" hint="De la página" onClick={() => void guard(showSummary)} />
         </div>

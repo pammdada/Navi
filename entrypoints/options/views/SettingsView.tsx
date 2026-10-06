@@ -2,7 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from 'react';
 import { validateEndpoint } from '@/utils/ai-summary';
 import { colorModeLabel } from '@/utils/preferences';
 import { aiSummarySettings } from '@/utils/storage';
-import { Bot, Captions, Contrast, Languages, Mic, Palette, RotateCcw, Settings, Sparkles, UserRound, Waves } from 'lucide-react';
+import { Bot,Contrast, Languages, Mic, Palette, RotateCcw, Settings, Sparkles, UserRound, Waves } from 'lucide-react';
 import { fontSizeLabels } from '@/utils/profiles';
 import { Card, ColorModePicker, FontSizePicker, Switch, ViewHeader, buttonStyles } from '../components/ui';
 import { QuickProfiles } from '../components/QuickProfiles';
@@ -165,12 +165,6 @@ export function SettingsView() {
               description="Oculta lo secundario y deja solo lo esencial."
               checked={preferences.simplifiedMode}
               onChange={(simplifiedMode) => void updatePreferences({ simplifiedMode }, simplifiedMode ? 'Modo simplificado activado.' : 'Modo simplificado desactivado.')}
-            />
-            <Switch
-              icon={Captions}
-              label="Subtítulos automáticos"
-              checked={preferences.captionsEnabled}
-              onChange={(captionsEnabled) => void updatePreferences({ captionsEnabled }, captionsEnabled ? 'Subtítulos activados.' : 'Subtítulos desactivados.')}
             />
             <Switch
               icon={Mic}

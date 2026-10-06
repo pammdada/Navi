@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Accessibility, Captions, Contrast, RotateCcw, Sparkles, Waves, X } from 'lucide-react';
+import { Accessibility,Contrast, RotateCcw, Sparkles, Waves, X } from 'lucide-react';
 import { useNavi } from '../state';
 import { FontSizePicker, ListenButton, Switch, buttonStyles } from './ui';
 import { fontSizeLabels } from '@/utils/profiles';
@@ -104,12 +104,6 @@ export function AccessibilityButton() {
             description="Quita animaciones y transiciones."
             checked={preferences.reduceMotion}
             onChange={(reduceMotion) => void updatePreferences({ reduceMotion }, reduceMotion ? 'Movimiento reducido.' : 'Animaciones activadas.')}
-          />
-          <Switch
-            icon={Captions}
-            label="Subtítulos automáticos"
-            checked={preferences.captionsEnabled}
-            onChange={(captionsEnabled) => void updatePreferences({ captionsEnabled }, captionsEnabled ? 'Subtítulos activados.' : 'Subtítulos desactivados.')}
           />
           <div className="flex flex-wrap gap-3 pt-2">
             <ListenButton text={readText} label="Leer esta página" variant="primary" />
