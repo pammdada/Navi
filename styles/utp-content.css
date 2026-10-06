@@ -2,7 +2,7 @@
 html[data-navi-font-size='large'] { zoom: 1.15; }
 html[data-navi-font-size='x-large'] { zoom: 1.3; }
 
-/* Alto contraste: texto blanco y amarillo sobre negro. Las fotos y videos no se tocan. */
+/* ---------- Alto contraste: texto blanco y amarillo sobre negro. Las fotos y videos no se tocan. ---------- */
 html.navi-high-contrast, html.navi-high-contrast body { background: #000 !important; color: #fff !important; }
 html.navi-high-contrast *:where(:not(img, video, canvas, iframe, svg, svg *, [data-navi])) {
   background-color: #000 !important; color: #fff !important; border-color: #fff !important; box-shadow: none !important; text-shadow: none !important;
@@ -13,12 +13,40 @@ html.navi-high-contrast a, html.navi-high-contrast a * { color: #ffeb3b !importa
 html.navi-high-contrast button, html.navi-high-contrast [role='button'], html.navi-high-contrast input, html.navi-high-contrast select, html.navi-high-contrast textarea { border: 2px solid #fff !important; }
 html.navi-high-contrast button, html.navi-high-contrast [role='button'] { color: #ffeb3b !important; }
 html.navi-high-contrast ::placeholder { color: #ddd !important; opacity: 1 !important; }
-
-/* Foco siempre visible en la página (WCAG 2.4.7). */
 html.navi-high-contrast :focus-visible { outline: 4px solid #00e5ff !important; outline-offset: 3px !important; }
+
+/* ---------- Paletas para daltonismo ----------
+   No es un filtro: se cambian los colores de enlaces, botones, foco y estados por combinaciones que no dependen
+   de los tonos que cada tipo de visión confunde, y los estados llevan siempre ícono + texto. */
+html[data-navi-color-vision='red-green-safe'] {
+  /* Protanopía / deuteranopía: azul y naranja oscuro. */
+  --navi-link: #0b4f9e; --navi-done: #0b4f9e; --navi-pending: #8a4b00; --navi-late: #8a4b00; --navi-focus: #0b4f9e;
+}
+html[data-navi-color-vision='blue-yellow-safe'] {
+  /* Tritanopía: magenta oscuro y turquesa oscuro. */
+  --navi-link: #a3004a; --navi-done: #006b6b; --navi-pending: #a3004a; --navi-late: #a3004a; --navi-focus: #a3004a;
+}
+html[data-navi-color-vision='red-green-safe'] a, html[data-navi-color-vision='blue-yellow-safe'] a { color: var(--navi-link) !important; text-decoration: underline !important; }
+html[data-navi-color-vision='red-green-safe'] button, html[data-navi-color-vision='red-green-safe'] [role='button'],
+html[data-navi-color-vision='blue-yellow-safe'] button, html[data-navi-color-vision='blue-yellow-safe'] [role='button'] { color: var(--navi-link) !important; border: 2px solid var(--navi-link) !important; }
+html[data-navi-color-vision='red-green-safe'] [aria-current='page'], html[data-navi-color-vision='red-green-safe'] [data-active='true'],
+html[data-navi-color-vision='blue-yellow-safe'] [aria-current='page'], html[data-navi-color-vision='blue-yellow-safe'] [data-active='true'] { border: 3px solid var(--navi-link) !important; text-decoration: underline !important; font-weight: 700 !important; }
+html[data-navi-color-vision='red-green-safe'] :focus-visible, html[data-navi-color-vision='blue-yellow-safe'] :focus-visible {
+  outline: 4px solid var(--navi-focus) !important; outline-offset: 3px !important; box-shadow: 0 0 0 2px #fff !important;
+}
+
+/* Estados (pendiente / completado / vencido) y alertas: Navi les agrega ícono y texto con estas reglas. */
+[data-navi-status]::before { content: attr(data-navi-status-icon) ' '; font-weight: 700; }
+[data-navi-status][data-navi-label]::after { content: ' · ' attr(data-navi-label); font-weight: 700; }
+html[data-navi-color-vision] [data-navi-status='done'] { color: var(--navi-done, inherit) !important; font-weight: 700 !important; }
+html[data-navi-color-vision] [data-navi-status='pending'] { color: var(--navi-pending, inherit) !important; font-weight: 700 !important; border-bottom: 2px dashed currentColor !important; }
+html[data-navi-color-vision] [data-navi-status='late'] { color: var(--navi-late, inherit) !important; font-weight: 700 !important; text-decoration: underline wavy !important; }
+html.navi-high-contrast [data-navi-status] { color: #fff !important; }
+
+/* ---------- Foco visible en la página (WCAG 2.4.7) ---------- */
 html[data-navi-font-size] :focus-visible, html.navi-simplified-mode :focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
 
-/* Modo simplificado: oculta lo secundario y centra el contenido en una columna cómoda de leer. */
+/* ---------- Modo simplificado: oculta lo secundario y centra el contenido en una columna cómoda de leer ---------- */
 html.navi-simplified-mode aside, html.navi-simplified-mode [role='complementary'], html.navi-simplified-mode .sidebar,
 html.navi-simplified-mode .drawer, html.navi-simplified-mode .advertisement, html.navi-simplified-mode [class*='advert' i],
 html.navi-simplified-mode footer, html.navi-simplified-mode [role='contentinfo'] { display: none !important; }
@@ -26,12 +54,19 @@ html.navi-simplified-mode main, html.navi-simplified-mode [role='main'] {
   max-width: 940px !important; margin-inline: auto !important; line-height: 1.75 !important; float: none !important;
 }
 
-/* Menos movimiento. */
+/* ---------- Menos movimiento ---------- */
 html.navi-reduce-motion *, html.navi-reduce-motion *::before, html.navi-reduce-motion *::after {
   animation: none !important; transition: none !important; scroll-behavior: auto !important;
 }
 
-/* Enlace "Saltar al contenido": invisible hasta que recibe el foco con Tab. */
+/* ---------- Lectura guiada: bloque que Navi está leyendo ---------- */
+[data-navi-reading-active] { outline: 4px solid #f59e0b !important; outline-offset: 5px !important; background-color: #fff7d6 !important; color: #111827 !important; border-radius: 4px; }
+[data-navi-reading-active] * { color: #111827 !important; }
+html.navi-high-contrast [data-navi-reading-active] { outline-color: #00e5ff !important; background-color: #1a1a00 !important; color: #fff !important; }
+html.navi-high-contrast [data-navi-reading-active] * { color: #fff !important; background-color: transparent !important; }
+html.navi-high-contrast [data-navi-reading-active] a { color: #ffeb3b !important; }
+
+/* ---------- Enlace "Saltar al contenido": invisible hasta que recibe el foco con Tab ---------- */
 #navi-skip-link {
   position: fixed; top: 8px; left: 8px; z-index: 2147483647; padding: 12px 18px; border-radius: 10px;
   background: #1e3a8a; color: #fff; font: 700 16px/1.2 system-ui, sans-serif; text-decoration: none;

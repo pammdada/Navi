@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { applyAccessibilityPreferences } from '@/utils/accessibility';
+import { mergePreferences, normalizePreferences } from '@/utils/preferences';
 import {
   accessibilityPreferences,
   defaultPreferences,
@@ -31,7 +32,7 @@ interface NaviState {
 const NaviContext = createContext<NaviState | null>(null);
 
 // Los valores guardados por versiones anteriores pueden no tener los campos nuevos.
-const withPreferenceDefaults = (value: Partial<AccessibilityPreferences> | null) => ({ ...defaultPreferences, ...value });
+const withPreferenceDefaults = normalizePreferences;
 const withProfileDefaults = (value: Partial<UserProfile> | null) => ({ ...defaultUserProfile, ...value });
 
 export function NaviProvider({ children }: { children: ReactNode }) {
@@ -73,7 +74,7 @@ export function NaviProvider({ children }: { children: ReactNode }) {
   const updatePreferences = useCallback(
     async (updates: Partial<AccessibilityPreferences>, message?: string) => {
       const previous = preferencesRef.current;
-      await savePreferences({ ...previous, ...updates });
+      await savePreferences(mergePreferences(previous, updates));
       if (message) {
         notify(message, () => {
           void savePreferences(previous);

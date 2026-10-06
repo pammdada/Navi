@@ -1,4 +1,4 @@
-import { AudioLines, BookOpenText, Contrast, Type } from 'lucide-react';
+import { AudioLines, BookOpenText, Contrast, ListOrdered, Type, ZoomIn } from 'lucide-react';
 import { fontSizeLabels } from '@/utils/profiles';
 import { Card, FontSizePicker, ListenButton, RangeField, Switch, ViewHeader, formatPercent, formatRate } from '../components/ui';
 import { useNavi } from '../state';
@@ -44,7 +44,24 @@ export function ReadingView() {
         </Card>
       </div>
 
-      <Card title="Escuchar contenido" icon={AudioLines} description="Así sonará Navi cuando pulses 'Escuchar contenido' en el panel lateral de UTP Class.">
+      <Card title="Herramientas en UTP Class" icon={ListOrdered} description="Las usas desde el panel lateral de Navi, con el ícono de Navi en la barra del navegador.">
+        <ul className="grid gap-3 md:grid-cols-3">
+          <li className="rounded-2xl border border-line-soft p-4">
+            <p className="flex items-center gap-2 text-lg font-bold"><AudioLines size={22} aria-hidden="true" className="text-brand" /> Leer</p>
+            <p className="text-ink-soft">Lee la página sección por sección y resalta lo que lee. Puedes pausar, volver o saltar.</p>
+          </li>
+          <li className="rounded-2xl border border-line-soft p-4">
+            <p className="flex items-center gap-2 text-lg font-bold"><ListOrdered size={22} aria-hidden="true" className="text-brand" /> Guía</p>
+            <p className="text-ink-soft">Lee una sección y espera a que pulses Siguiente: ideal para ir a tu ritmo.</p>
+          </li>
+          <li className="rounded-2xl border border-line-soft p-4">
+            <p className="flex items-center gap-2 text-lg font-bold"><ZoomIn size={22} aria-hidden="true" className="text-brand" /> Lupa</p>
+            <p className="text-ink-soft">Amplía solo el texto bajo el cursor al 150, 200 o 250 %. Se cierra con Esc.</p>
+          </li>
+        </ul>
+      </Card>
+
+      <Card title="Escuchar contenido" icon={AudioLines} description="Así sonará Navi cuando pulses 'Leer' en el panel lateral de UTP Class.">
         <div className="grid gap-6 md:grid-cols-2">
           <RangeField
             label="Velocidad de lectura"

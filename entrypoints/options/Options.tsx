@@ -4,6 +4,7 @@ import { StatusToast } from './components/StatusToast';
 import { Onboarding } from './onboarding/Onboarding';
 import { useHashRoute, type RouteId } from './routes';
 import { NaviProvider, useNavi } from './state';
+import { CommandsView } from './views/CommandsView';
 import { HelpView } from './views/HelpView';
 import { HomeView } from './views/HomeView';
 import { MediaView } from './views/MediaView';
@@ -15,6 +16,7 @@ const views: Record<RouteId, () => React.JSX.Element> = {
   inicio: HomeView,
   lectura: ReadingView,
   voz: VoiceView,
+  comandos: CommandsView,
   multimedia: MediaView,
   configuracion: SettingsView,
   ayuda: HelpView,

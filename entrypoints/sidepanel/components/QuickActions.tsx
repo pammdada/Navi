@@ -1,4 +1,0 @@
-interface QuickActionsProps { highContrast: boolean; simplifiedMode: boolean; onRead: () => void; onContrast: () => void; onSimplified: () => void; onFontIncrease: () => void; }
-export function QuickActions({ highContrast, simplifiedMode, onRead, onContrast, onSimplified, onFontIncrease }: QuickActionsProps) {
-  return <section aria-labelledby="quick-actions-title"><h2 id="quick-actions-title">Accesos rápidos</h2><div className="navi-action-grid"><button type="button" onClick={onRead}>🔊 Escuchar contenido</button><button type="button" onClick={onContrast} aria-pressed={highContrast}>◐ {highContrast ? 'Quitar contraste' : 'Alto contraste'}</button><button type="button" onClick={onFontIncrease}>A+ Ampliar texto</button><button type="button" onClick={onSimplified} aria-pressed={simplifiedMode}>☰ {simplifiedMode ? 'Modo completo' : 'Modo simple'}</button></div></section>;
-}

@@ -12,7 +12,8 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "test": "node --test \"tests/*.test.ts\""
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "^5.3.0",

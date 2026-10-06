@@ -1,4 +1,5 @@
 import { findMainContainer, isVisible } from './dom-analyzer';
+import { classifyStatus, needsLabel, statusMeta } from './status-labels';
 
 const SKIP_LINK_ID = 'navi-skip-link';
 const accessibleName = (element: Element) => element.textContent?.trim() || element.getAttribute('aria-label') || element.getAttribute('title');
@@ -57,6 +58,34 @@ function labelControls(): void {
   });
 }
 
+const STATUS_CANDIDATES = '[class*="pending" i], [class*="complet" i], [class*="overdue" i], [class*="success" i], [class*="danger" i], [class*="warning" i], [class*="error" i], [class*="badge" i], [class*="chip" i], [class*="status" i], [role="alert"]';
+
+/**
+ * Con una paleta para daltonismo activa, los estados no pueden depender solo del color: se les agrega un
+ * ícono y, si el elemento no lo dice con palabras, una etiqueta visible ("Pendiente", "Completada", "Vencida").
+ * El ícono y la etiqueta los dibuja el CSS a partir de estos atributos; el texto original no se modifica.
+ */
+function annotateStatus(): void {
+  const mode = document.documentElement.dataset.naviColorVision;
+  const active = Boolean(mode) && mode !== 'standard';
+  const attributes = ['data-navi-status', 'data-navi-status-icon', 'data-navi-label'];
+  if (!active) {
+    document.querySelectorAll('[data-navi-status]').forEach((element) => attributes.forEach((name) => element.removeAttribute(name)));
+    return;
+  }
+  document.querySelectorAll<HTMLElement>(STATUS_CANDIDATES).forEach((element) => {
+    if (element.closest('[data-navi]') || !isVisible(element)) return;
+    const text = (element.textContent ?? '').replace(/\s+/g, ' ').trim();
+    if (text.length > 60) return;
+    const kind = classifyStatus(text, element.className.toString(), element.getAttribute('role'));
+    if (!kind) return;
+    element.setAttribute('data-navi-status', kind);
+    element.setAttribute('data-navi-status-icon', statusMeta[kind].icon);
+    if (needsLabel(kind, text)) element.setAttribute('data-navi-label', statusMeta[kind].label);
+    else element.removeAttribute('data-navi-label');
+  });
+}
+
 function ensureDocumentLanguage(): void {
   if (!document.documentElement.lang) document.documentElement.lang = 'es';
 }
@@ -72,6 +101,7 @@ export function enhancePage(): void {
   ensureSkipLink();
   labelImages();
   labelControls();
+  annotateStatus();
 }
 
 /** La aplicación es una SPA: se vuelve a mejorar el DOM cuando cambia el contenido. */

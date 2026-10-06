@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquareText, Mic, MicOff, Square } from 'lucide-react';
-import { describeCommand, identifyCommand, voiceCommandGuide } from '@/utils/speech/commands';
+import { defaultResponseFor, describeCommand, detectPendingRoute, pendingCustomActions, pendingRouteMessage, resolveVoiceCommand, sanitizeStoredCommands, voiceCommandGuide } from '@/utils/speech/commands';
+import { customCommands, type CustomCommand } from '@/utils/storage';
 import { isSpeechRecognitionSupported, startSpeechRecognition } from '@/utils/speech/recognition';
 import { speakWithPreferences } from '@/utils/speech/synthesis';
 import { Card, Switch, ViewHeader } from '../components/ui';
@@ -20,10 +21,19 @@ export function VoiceView() {
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
   const stopRef = useRef<() => void>(() => undefined);
+  const [personal, setPersonal] = useState<CustomCommand[]>([]);
+  useEffect(() => {
+    void customCommands.getValue().then((value) => setPersonal(sanitizeStoredCommands(value)));
+    return customCommands.watch((value) => setPersonal(sanitizeStoredCommands(value)));
+  }, []);
 
   useEffect(() => () => stopRef.current(), []);
 
   const listen = () => {
+    if (!preferences.voiceEnabled) {
+      setResponse('Los comandos de voz están desactivados. Actívalos arriba para probar.');
+      return;
+    }
     if (listening) {
       stopRef.current();
       return;
@@ -32,8 +42,15 @@ export function VoiceView() {
     setResponse('Te escucho…');
     stopRef.current = startSpeechRecognition(
       (heard) => {
-        const command = identifyCommand(heard);
-        const answer = command === 'unknown' ? 'No reconocí ese comando. Prueba con "leer página".' : `Entendido. ${describeCommand(command)}`;
+        const { command, custom } = resolveVoiceCommand(heard, personal);
+        const pending = command === 'unknown' ? detectPendingRoute(heard) : null;
+        const answer = custom
+          ? custom.response || defaultResponseFor(custom.action)
+          : pending
+            ? pendingRouteMessage(pending)
+            : command === 'unknown'
+              ? 'No reconocí ese comando. Prueba con “leer página” o “ir a cursos”.'
+              : `Entendido. ${describeCommand(command)}`;
         setTranscript(heard);
         setResponse(answer);
         speakWithPreferences(answer, preferences);
@@ -70,8 +87,9 @@ export function VoiceView() {
               type="button"
               onClick={listen}
               aria-pressed={listening}
+              aria-disabled={!preferences.voiceEnabled || undefined}
               className={`inline-flex min-h-20 cursor-pointer items-center gap-3 rounded-full px-7 text-xl font-bold ${
-                listening ? 'animate-listening bg-danger text-surface' : 'bg-brand text-on-brand hover:bg-brand-strong'
+                !preferences.voiceEnabled ? 'bg-tint text-ink-soft border-2 border-line-soft' : listening ? 'animate-listening bg-danger text-surface' : 'bg-brand text-on-brand hover:bg-brand-strong'
               }`}
             >
               {listening ? <Square size={26} fill="currentColor" aria-hidden="true" /> : <Mic size={30} aria-hidden="true" />}
@@ -102,7 +120,16 @@ export function VoiceView() {
               <dd className="text-ink-soft">{description}</dd>
             </div>
           ))}
+          {pendingCustomActions.map(({ id, label }) => (
+            <div key={id} className="rounded-2xl border border-dashed border-line p-4">
+              <dt className="text-lg font-bold">“{label}”</dt>
+              <dd className="text-ink-soft">Próximamente: se habilitará cuando se valide esa ruta con UTP Class.</dd>
+            </div>
+          ))}
         </dl>
+        <p className="mt-4 text-lg">
+          ¿Quieres tus propias frases? Créalas en <a className="font-bold text-brand underline" href="#/comandos">Mis comandos</a>.
+        </p>
       </Card>
     </>
   );

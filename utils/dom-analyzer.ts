@@ -1,14 +1,9 @@
-export interface PageSummary {
-  title: string;
-  headings: string[];
-  links: Array<{ label: string; href: string }>;
-  mainText: string;
-}
-
 const NOISE = 'script, style, noscript, template, svg, nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"], [role="complementary"], [aria-hidden="true"], [data-navi]';
 const MAIN_SELECTOR = 'main, [role="main"], #main-content, .main-content, [class*="main-content" i], [class*="page-content" i]';
+const HEADINGS = 'h1, h2, h3, [role="heading"]';
+const TEXT_BLOCKS = 'p, span, li, a, td, th, label, button, strong, em, pre, blockquote, h1, h2, h3, h4, h5, h6';
 
-const clean = (text: string | null | undefined): string => text?.replace(/\s+/g, ' ').trim() ?? '';
+export const clean = (text: string | null | undefined): string => text?.replace(/\s+/g, ' ').trim() ?? '';
 
 export function isVisible(element: Element): boolean {
   const html = element as HTMLElement;
@@ -18,6 +13,9 @@ export function isVisible(element: Element): boolean {
   const box = html.getBoundingClientRect();
   return box.width > 0 && box.height > 0;
 }
+
+/** true si el elemento es parte de un menú, cabecera, pie, contenido oculto o de la propia interfaz de Navi. */
+export const isNoise = (element: Element): boolean => element.matches(NOISE) || element.closest(NOISE) !== null;
 
 /** Texto visible de un elemento, sin menús, scripts ni contenido oculto. */
 export function readableText(root: Element): string {
@@ -31,11 +29,9 @@ export function readableText(root: Element): string {
     },
   });
   while (walker.nextNode()) parts.push(clean(walker.currentNode.textContent));
-  return parts.join('. ').replace(/\.\s*\./g, '.').replace(/([.!?:;,])\./g, '$1');
+  return parts.join(' ').replace(/\s+([.,;:!?])/g, '$1');
 }
 
-const HEADINGS = 'h1, h2, h3, [role="heading"]';
-const TEXT_BLOCKS = 'p, span, li, a, td, th, label, button, strong, em, pre, blockquote, h1, h2, h3, h4, h5, h6';
 const textLength = (element: Element) => clean(element.textContent).length;
 const linkTextLength = (element: Element) => Array.from(element.querySelectorAll('a')).reduce((sum, link) => sum + textLength(link), 0);
 
@@ -68,43 +64,8 @@ export function findMainContainer(): Element {
   return current;
 }
 
-export function analyzeCurrentPage(): PageSummary {
-  const main = findMainContainer();
-  const heading = Array.from(document.querySelectorAll('h1')).find(isVisible);
-  const mainHeading = Array.from(main.querySelectorAll('h1, h2')).find(isVisible);
+export function getPageTitle(main: Element): string {
+  const heading = Array.from(document.querySelectorAll('h1')).find(isVisible) ?? Array.from(main.querySelectorAll('h1, h2')).find(isVisible);
   const pageTitle = document.title.split(/\s[-|·]\s/).map(clean).filter(Boolean).pop();
-  const title = clean(heading?.textContent) || clean(mainHeading?.textContent) || pageTitle || 'Página de UTP Class';
-  const headings = Array.from(main.querySelectorAll('h1, h2, h3, [role="heading"]'))
-    .filter(isVisible)
-    .map((item) => clean(item.textContent))
-    .filter(Boolean)
-    .slice(0, 12);
-  const links = Array.from(main.querySelectorAll<HTMLAnchorElement>('a[href]'))
-    .filter(isVisible)
-    .map((link) => ({ label: clean(link.textContent) || clean(link.getAttribute('aria-label')) || 'Enlace sin nombre', href: link.href }))
-    .filter((link) => link.label.length > 1)
-    .slice(0, 20);
-  return { title, headings, links, mainText: readableText(main).slice(0, 12000) };
-}
-
-const navigationAliases: Record<string, string[]> = {
-  cursos: ['curso', 'courses', 'mis cursos', 'asignatura'],
-  tareas: ['tarea', 'assignment', 'actividad', 'entrega'],
-  calificaciones: ['calificaci', 'nota', 'grade'],
-  anuncios: ['anuncio', 'announcement', 'aviso'],
-  inicio: ['inicio', 'home'],
-  calendario: ['calendario', 'agenda', 'horario'],
-  mensajes: ['mensaje', 'inbox', 'bandeja'],
-};
-
-export function findNavigationTarget(command: string): HTMLElement | null {
-  const normalized = command.toLocaleLowerCase('es');
-  const entry = Object.entries(navigationAliases).find(([key, terms]) => normalized.includes(key) || terms.some((term) => normalized.includes(term)));
-  if (!entry) return null;
-  const matches = Array.from(document.querySelectorAll<HTMLElement>('a[href], button, [role="link"], [role="tab"], [role="menuitem"]'))
-    .filter((element) => !element.closest('[data-navi]') && isVisible(element))
-    .map((element) => ({ element, label: `${clean(element.textContent)} ${element.getAttribute('aria-label') ?? ''}`.toLocaleLowerCase('es').trim() }))
-    .filter(({ label }) => entry[1].some((term) => label.includes(term)));
-  // Entre varias coincidencias, la de texto más corto suele ser el enlace del menú y no un título largo.
-  return matches.sort((a, b) => a.label.length - b.label.length)[0]?.element ?? null;
+  return clean(heading?.textContent) || pageTitle || 'Página de UTP Class';
 }

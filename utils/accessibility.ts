@@ -6,4 +6,5 @@ export function applyAccessibilityPreferences(preferences: AccessibilityPreferen
   root.classList.toggle('navi-simplified-mode', preferences.simplifiedMode);
   root.classList.toggle('navi-reduce-motion', Boolean(preferences.reduceMotion));
   root.dataset.naviFontSize = preferences.fontSize;
+  root.dataset.naviColorVision = preferences.colorVisionMode;
 }

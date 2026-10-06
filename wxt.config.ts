@@ -14,5 +14,7 @@ export default defineConfig({
     action: { default_title: 'Abrir Navi' },
     permissions: ['storage', 'activeTab', 'scripting', 'sidePanel', 'tabs'],
     host_permissions: ['*://class.utp.edu.pe/*'],
+    // Solo para el resumen con IA opcional: Navi pide permiso para UN servidor concreto, con un clic del usuario.
+    optional_host_permissions: ['https://*/*', 'http://localhost/*', 'http://127.0.0.1/*'],
   },
 });

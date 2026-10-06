@@ -8,7 +8,7 @@ const shortcuts = [
   { keys: ['Shift', 'Tab'], action: 'Volver al elemento anterior' },
   { keys: ['Enter'], action: 'Abrir un enlace o pulsar un botón' },
   { keys: ['Espacio'], action: 'Activar o desactivar un interruptor' },
-  { keys: ['Esc'], action: 'Cerrar un menú o una ventana' },
+  { keys: ['Esc'], action: 'Cerrar un menú, una ventana o la lupa de lectura' },
 ];
 
 const faqs = [
@@ -23,6 +23,22 @@ const faqs = [
   {
     question: '¿En qué páginas funciona Navi?',
     answer: 'El panel lateral funciona en UTP Class (class.utp.edu.pe). Tus ajustes se aplican ahí automáticamente.',
+  },
+  {
+    question: '¿Por qué “Tareas” dice “Próximamente”?',
+    answer: 'Navi solo te lleva a páginas de UTP Class que se probaron con una sesión real. Hoy está verificada la de Cursos; Tareas y Notas se habilitarán cuando se valide su ruta, para no llevarte a un lugar equivocado.',
+  },
+  {
+    question: '¿Cómo funciona la lectura guiada?',
+    answer: '“Leer” lee toda la página sección por sección; “Guía” lee una sección y espera a que pulses Siguiente. En UTP Class se resalta el bloque que Navi está leyendo, y puedes pausar, volver o saltar de sección.',
+  },
+  {
+    question: '¿Qué es la lupa?',
+    answer: 'Amplía el texto bajo el cursor (o el elemento con foco del teclado) al 150, 200 o 250 % sin cambiar el tamaño de toda la página. Se cierra con Esc.',
+  },
+  {
+    question: '¿Puede un comando mío borrar o entregar algo?',
+    answer: 'No. Los comandos personales solo pueden usar acciones de una lista cerrada (leer, resumen, ir a cursos, contraste, modo simple, ampliar texto y lectura guiada).',
   },
   {
     question: '¿Puedo deshacer un cambio?',
