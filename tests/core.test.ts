@@ -4,10 +4,10 @@ import { describe, it } from 'node:test';
 import { AiSummaryError, buildAiPayload, parseAiResponse, requestAiSummary, validateEndpoint } from '../utils/ai-summary.ts';
 import { runCommand, type CommandContext } from '../utils/command-runner.ts';
 import { GuidedReader, type ReaderState } from '../utils/guided-reader.ts';
-import { isRouteEnabled, resolveSafeUrl } from '../utils/navigation.ts';
-import { LEGACY_KEYS, defaultValues, mergePreferences, migrateLegacyPreferences, nextColorMode, normalizePreferences } from '../utils/preferences.ts';
+import { parseCourseUrl, resolveSafeUrl } from '../utils/navigation.ts';
+import { LEGACY_KEYS, defaultPreferences, mergePreferences, migrateLegacyPreferences, nextColorMode, normalizePreferences } from '../utils/preferences.ts';
 import { classifyText, createLocalSummary, createReadingPlan, summaryToSpeech, type ReadingUnit } from '../utils/reading-plan.ts';
-import { detectPendingRoute, resolveVoiceCommand, sanitizeStoredCommands, validateCustomCommand } from '../utils/speech/commands.ts';
+import { resolveVoiceCommand, sanitizeStoredCommands, validateCustomCommand } from '../utils/speech/commands.ts';
 import { classifyStatus, needsLabel } from '../utils/status-labels.ts';
 
 const unit = (n: number, type: ReadingUnit['type'], text: string): ReadingUnit => ({ id: `u${n}`, type, text, elementId: `navi-reading-${n}` });
@@ -24,7 +24,7 @@ const samplePlan = () =>
 
 describe('preferencias', () => {
   it('mantiene alto contraste y paleta coherentes', () => {
-    const base = defaultValues;
+    const base = defaultPreferences;
     assert.equal(mergePreferences(base, { highContrast: true }).colorVisionMode, 'high-contrast');
     const hc = mergePreferences(base, { highContrast: true });
     assert.equal(mergePreferences(hc, { highContrast: false }).colorVisionMode, 'standard');
@@ -61,13 +61,26 @@ describe('preferencias', () => {
 });
 
 describe('navegación segura', () => {
-  it('solo cursos está verificado', () => {
-    assert.equal(isRouteEnabled('courses'), true);
+  const course = 'https://class.utp.edu.pe/student/courses/123/section/456/learnv2';
+
+  it('las rutas globales son fijas', () => {
     assert.equal(resolveSafeUrl('courses'), 'https://class.utp.edu.pe/student/courses');
-    for (const id of ['tasks', 'grades', 'announcements'] as const) {
-      assert.equal(isRouteEnabled(id), false);
-      assert.equal(resolveSafeUrl(id), null);
-    }
+    assert.equal(resolveSafeUrl('chat'), 'https://class.utp.edu.pe/student/messages');
+    assert.equal(resolveSafeUrl('calendar', 'https://otro.com/x'), 'https://class.utp.edu.pe/student/calendar');
+  });
+
+  it('las pestañas del curso usan el curso abierto', () => {
+    assert.equal(resolveSafeUrl('tasks', course), 'https://class.utp.edu.pe/student/courses/123/section/456/listHomework');
+    assert.equal(resolveSafeUrl('grades', course), 'https://class.utp.edu.pe/student/courses/123/section/456/calification');
+    assert.equal(resolveSafeUrl('announcements', 'https://class.utp.edu.pe/student/courses/123/section/456/mobilecourse'), 'https://class.utp.edu.pe/student/courses/123/section/456/announcements');
+  });
+
+  it('fuera de un curso (o en otro sitio) no se arma una ruta de curso', () => {
+    assert.equal(resolveSafeUrl('tasks'), null);
+    assert.equal(resolveSafeUrl('tasks', 'https://class.utp.edu.pe/student/courses'), null);
+    assert.equal(resolveSafeUrl('tasks', 'https://malo.com/student/courses/1/section/2/learnv2'), null);
+    assert.equal(parseCourseUrl('https://class.utp.edu.pe/student/courses/a%2Fb/section/2/x'), null);
+    assert.deepEqual(parseCourseUrl(course), { courseId: '123', sectionId: '456' });
   });
 });
 
@@ -81,12 +94,13 @@ describe('comandos de voz', () => {
     assert.equal(resolveVoiceCommand('borrar todo').command, 'unknown');
   });
 
-  it('"ir a tareas" se reconoce pero no navega', () => {
-    assert.equal(resolveVoiceCommand('ir a tareas').command, 'unknown');
-    assert.equal(detectPendingRoute('ir a tareas'), 'tasks');
-    assert.equal(detectPendingRoute('abrir notas'), 'grades');
-    assert.equal(detectPendingRoute('ir a anuncios'), 'announcements');
-    assert.equal(detectPendingRoute('leer página'), null);
+  it('reconoce los comandos de navegación', () => {
+    assert.equal(resolveVoiceCommand('ir a tareas').command, 'go-tasks');
+    assert.equal(resolveVoiceCommand('abrir notas').command, 'go-grades');
+    assert.equal(resolveVoiceCommand('ir a anuncios').command, 'go-announcements');
+    assert.equal(resolveVoiceCommand('ir al calendario').command, 'go-calendar');
+    assert.equal(resolveVoiceCommand('ir al sílabo').command, 'go-syllabus');
+    assert.equal(resolveVoiceCommand('ir a la ayuda').command, 'go-help');
   });
 
   it('valida los comandos personales', () => {
@@ -123,7 +137,7 @@ describe('comandos de voz', () => {
 describe('ejecutor de comandos', () => {
   const makeContext = (overrides: Partial<CommandContext> = {}) => {
     const log: string[] = [];
-    let preferences = { ...defaultValues };
+    let preferences = { ...defaultPreferences };
     const ctx: CommandContext = {
       get preferences() {
         return preferences;
@@ -133,9 +147,10 @@ describe('ejecutor de comandos', () => {
       },
       startReading: async (mode) => `lectura ${mode}`,
       readSummary: async () => 'resumen',
-      openCourses: async () => {
-        log.push('cursos');
+      openRoute: async (route) => {
+        log.push(route);
       },
+      calendar: async (op) => `calendario:${op}`,
       stopReading: () => log.push('stop'),
       speak: (text) => log.push(`voz:${text}`),
       ...overrides,
@@ -151,12 +166,12 @@ describe('ejecutor de comandos', () => {
     assert.equal(prefs().colorVisionMode, 'standard');
   });
 
-  it('abre cursos y avisa; "ir a tareas" explica que no está disponible', async () => {
+  it('abre cursos y tareas y avisa', async () => {
     const { ctx, log } = makeContext();
     assert.equal(await runCommand('go-courses', ctx), 'Abriendo tus cursos.');
-    assert.ok(log.includes('cursos'));
-    const message = await runCommand('unknown', ctx, { transcript: 'ir a tareas' });
-    assert.match(message, /Tareas todavía no está disponible/);
+    assert.ok(log.includes('courses'));
+    assert.equal(await runCommand('go-tasks', ctx), 'Abriendo las tareas del curso.');
+    assert.ok(log.includes('tasks'));
   });
 
   it('un comando personal responde con su frase y solo hace su acción', async () => {
@@ -164,12 +179,12 @@ describe('ejecutor de comandos', () => {
     const custom = { id: 'a', phrase: 'mis cursos', action: 'go-courses' as const, enabled: true, response: 'Abriendo tus tareas del día' };
     const message = await runCommand('go-courses', ctx, { custom });
     assert.equal(message, 'Abriendo tus tareas del día');
-    assert.deepEqual(log, ['cursos', 'voz:Abriendo tus tareas del día']);
+    assert.deepEqual(log, ['courses', 'voz:Abriendo tus tareas del día']);
   });
 
   it('muestra el error en vez de fallar en silencio', async () => {
     const { ctx } = makeContext({
-      openCourses: async () => {
+      openRoute: async () => {
         throw new Error('Abre UTP Class (class.utp.edu.pe) para usar esta función.');
       },
     });
@@ -217,7 +232,7 @@ describe('plan de lectura', () => {
 });
 
 describe('lectura guiada', () => {
-  const setup = (mode: 'continuous' | 'stepped') => {
+  const setup = () => {
     const spoken: string[] = [];
     const highlights: (string | null)[] = [];
     const states: ReaderState[] = [];
@@ -242,7 +257,7 @@ describe('lectura guiada', () => {
   };
 
   it('lee de corrido anunciando cada sección y resaltando', () => {
-    const { reader, spoken, highlights, endSpeech, last } = setup('continuous');
+    const { reader, spoken, highlights, endSpeech, last } = setup();
     assert.equal(reader.start('continuous'), true);
     assert.equal(spoken[0], 'Sección 1 de 3: Introducción.');
     assert.equal(highlights[0], 'navi-reading-1');
@@ -263,7 +278,7 @@ describe('lectura guiada', () => {
   });
 
   it('en modo guía se detiene al final de cada sección', () => {
-    const { reader, spoken, endSpeech, last } = setup('stepped');
+    const { reader, spoken, endSpeech, last } = setup();
     reader.start('stepped');
     endSpeech(); // anuncio -> párrafo
     endSpeech(); // fin sección 1
@@ -276,7 +291,7 @@ describe('lectura guiada', () => {
   });
 
   it('pausa, reanuda la misma frase y no avanza con una frase vieja', () => {
-    const { reader, spoken, endSpeech, last } = setup('continuous');
+    const { reader, spoken, endSpeech, last } = setup();
     reader.start('continuous');
     endSpeech();
     assert.equal(spoken[1], 'Bienvenidos al curso.');
@@ -290,7 +305,7 @@ describe('lectura guiada', () => {
   });
 
   it('siguiente y anterior cambian de sección', () => {
-    const { reader, spoken, last } = setup('continuous');
+    const { reader, spoken, last } = setup();
     reader.start('continuous');
     reader.next();
     assert.equal(spoken[spoken.length - 1], 'Sección 2 de 3: Actividades.');
@@ -302,7 +317,7 @@ describe('lectura guiada', () => {
   });
 
   it('detener limpia el resaltado y queda en reposo', () => {
-    const { reader, highlights, last } = setup('continuous');
+    const { reader, highlights, last } = setup();
     reader.start('continuous');
     reader.stop();
     assert.equal(last().status, 'idle');

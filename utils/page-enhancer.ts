@@ -1,11 +1,11 @@
-import { findMainContainer, isVisible } from './dom-analyzer';
+import { MAIN_LANDMARK, findMainContainer, isVisible } from './dom-analyzer';
 import { classifyStatus, needsLabel, statusMeta } from './status-labels';
 
 const SKIP_LINK_ID = 'navi-skip-link';
 const accessibleName = (element: Element) => element.textContent?.trim() || element.getAttribute('aria-label') || element.getAttribute('title');
 
 function ensureMainLandmark(): void {
-  if (document.querySelector('main, [role="main"]')) return;
+  if (document.querySelector(MAIN_LANDMARK)) return;
   const main = findMainContainer();
   if (main === document.body) return;
   main.setAttribute('role', 'main');
@@ -15,7 +15,7 @@ function ensureMainLandmark(): void {
 }
 
 function ensureSkipLink(): void {
-  const main = document.querySelector<HTMLElement>('main, [role="main"]');
+  const main = document.querySelector<HTMLElement>(MAIN_LANDMARK);
   const existing = document.getElementById(SKIP_LINK_ID);
   if (!main) return existing?.remove();
   if (!main.id) main.id = 'navi-main';
@@ -27,7 +27,7 @@ function ensureSkipLink(): void {
   link.textContent = 'Saltar al contenido principal';
   link.addEventListener('click', (event) => {
     event.preventDefault();
-    const target = document.querySelector<HTMLElement>('main, [role="main"]');
+    const target = document.querySelector<HTMLElement>(MAIN_LANDMARK);
     if (target) {
       if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
       target.focus();
@@ -86,6 +86,33 @@ function annotateStatus(): void {
   });
 }
 
+const CARD_MARK = 'data-navi-card';
+
+/**
+ * En la portada del curso (/mobilecourse) las secciones son <div> clicables con un <h1>, sin rol ni foco de teclado.
+ * Se les da rol de botón, foco y activación con Enter o Espacio (equivale a que el usuario haga clic en esa misma tarjeta).
+ */
+function makeCourseCardsKeyboardReachable(): void {
+  if (!location.pathname.endsWith('/mobilecourse')) return;
+  document.querySelectorAll<HTMLElement>('#root h1').forEach((heading) => {
+    const card = heading.parentElement?.parentElement;
+    if (!card || card.hasAttribute(CARD_MARK) || card.closest('a, button') || getComputedStyle(card).cursor !== 'pointer') return;
+    card.setAttribute(CARD_MARK, '');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', heading.textContent?.trim() ?? '');
+    card.addEventListener('keydown', (event) => {
+      if (event.target !== card || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      card.click();
+    });
+  });
+}
+
+function labelCourseFilters(): void {
+  document.querySelectorAll<HTMLInputElement>('.sb-dropdown__control input:not([aria-label])').forEach((input) => input.setAttribute('aria-label', 'Filtrar por estado'));
+}
+
 function ensureDocumentLanguage(): void {
   if (!document.documentElement.lang) document.documentElement.lang = 'es';
 }
@@ -101,6 +128,8 @@ export function enhancePage(): void {
   ensureSkipLink();
   labelImages();
   labelControls();
+  labelCourseFilters();
+  makeCourseCardsKeyboardReachable();
   annotateStatus();
 }
 

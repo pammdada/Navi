@@ -1,4 +1,4 @@
-import { LEGACY_KEYS, defaultValues, migrateLegacyPreferences } from './preferences';
+import { LEGACY_KEYS, defaultPreferences, migrateLegacyPreferences } from './preferences';
 import { accessibilityPreferences, type AccessibilityPreferences } from './storage';
 
 /**
@@ -11,7 +11,7 @@ export async function migrateStorage(): Promise<void> {
   const legacyKeys = LEGACY_KEYS.filter((key) => key in raw);
   const migrated = migrateLegacyPreferences(stored, raw);
 
-  const missingFields = stored ? Object.keys(defaultValues).some((key) => !(key in stored)) : false;
+  const missingFields = stored ? Object.keys(defaultPreferences).some((key) => !(key in stored)) : false;
   const inconsistent = stored ? migrated.highContrast !== stored.highContrast || migrated.colorVisionMode !== stored.colorVisionMode : false;
   const adoptsLegacyValues = !stored && legacyKeys.length > 0;
 

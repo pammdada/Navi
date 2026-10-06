@@ -1,47 +1,16 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { applyAccessibilityPreferences } from '@/utils/accessibility';
 import { GuidedReader, idleState, type ReaderMode, type ReaderState } from '@/utils/guided-reader';
 import { sendToPage } from '@/utils/page-bridge';
-import { mergePreferences, normalizePreferences } from '@/utils/preferences';
 import type { ReadingPlan } from '@/utils/reading-plan';
 import { sanitizeStoredCommands } from '@/utils/speech/commands';
 import { speakWithPreferences, stopSpeaking } from '@/utils/speech/synthesis';
 import {
-  accessibilityPreferences,
   aiSummarySettings,
   customCommands,
-  defaultPreferences,
   userProfile,
   type AccessibilityPreferences,
   type CustomCommand,
 } from '@/utils/storage';
-
-/** Ajustes compartidos con la página y el Centro Navi. El propio panel también los aplica (contraste y tamaño). */
-export function usePreferences() {
-  const [preferences, setPreferences] = useState<AccessibilityPreferences>(defaultPreferences);
-  const ref = useRef(preferences);
-
-  useEffect(() => {
-    const accept = (value: Partial<AccessibilityPreferences> | null) => {
-      const next = normalizePreferences(value);
-      ref.current = next;
-      setPreferences(next);
-    };
-    void accessibilityPreferences.getValue().then(accept);
-    return accessibilityPreferences.watch(accept);
-  }, []);
-
-  useEffect(() => applyAccessibilityPreferences(preferences), [preferences]);
-
-  const update = useCallback(async (updates: Partial<AccessibilityPreferences>) => {
-    const next = mergePreferences(ref.current, updates);
-    ref.current = next;
-    setPreferences(next);
-    await accessibilityPreferences.setValue(next);
-  }, []);
-
-  return { preferences, ref, update };
-}
 
 function useStoredValue<T>(read: () => Promise<T>, watch: (callback: (value: T) => void) => () => void, initial: T): T {
   const [value, setValue] = useState<T>(initial);

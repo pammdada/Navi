@@ -2,20 +2,23 @@ import '@/styles/utp-content.css';
 import { applyAccessibilityPreferences } from '@/utils/accessibility';
 import { setCaptions } from '@/utils/captions';
 import { setColorVisionMode } from '@/utils/page-colors';
+import { runCalendarOp } from '@/utils/page-calendar';
+import type { CalendarOp } from '@/utils/speech/actions';
 import { watchPage, enhancePage } from '@/utils/page-enhancer';
 import { isLensOpen, toggleLens } from '@/utils/page-lens';
 import { buildReadingPlan, clearReadingMarks, highlightReadingUnit } from '@/utils/page-reader';
 import { normalizePreferences } from '@/utils/preferences';
 import { accessibilityPreferences } from '@/utils/storage';
 
-/** Mensajes que el panel lateral puede enviar a la página. Son un conjunto cerrado: no hay mensajes para hacer clic ni navegar. */
+/** Mensajes que el panel lateral puede enviar a la página. Son un conjunto cerrado: no hay mensajes para hacer clic en elementos ni navegar. NAVI_CALENDAR solo lee el calendario o pulsa sus botones Anterior/Siguiente/Hoy. */
 type ContentRequest =
   | { type: 'NAVI_PING' }
   | { type: 'NAVI_GET_READING_PLAN' }
   | { type: 'NAVI_HIGHLIGHT_UNIT'; elementId: string | null }
   | { type: 'NAVI_CLEAR_READING' }
   | { type: 'NAVI_APPLY_CAPTIONS'; enabled: boolean }
-  | { type: 'NAVI_TOGGLE_LENS' };
+  | { type: 'NAVI_TOGGLE_LENS' }
+  | { type: 'NAVI_CALENDAR'; op: CalendarOp };
 
 declare global {
   interface Window {
@@ -71,6 +74,8 @@ export default defineContentScript({
           return Promise.resolve(setCaptions(Boolean(message.enabled)));
         case 'NAVI_TOGGLE_LENS':
           return Promise.resolve({ enabled: toggleLens(notifyLensClosed) });
+        case 'NAVI_CALENDAR':
+          return runCalendarOp(message.op).then((text) => ({ message: text }));
         default:
           return undefined;
       }

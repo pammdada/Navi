@@ -5,7 +5,6 @@ import {
   MAX_RESPONSE_LENGTH,
   customActionOptions,
   defaultResponseFor,
-  pendingCustomActions,
   sanitizeStoredCommands,
   validateCustomCommand,
 } from '@/utils/speech/commands';
@@ -125,11 +124,6 @@ export function CommandsView() {
               {customActionOptions.map((option) => (
                 <option key={option.id} value={option.id}>{option.label}</option>
               ))}
-              <optgroup label="Próximamente (falta validar con UTP Class)">
-                {pendingCustomActions.map((option) => (
-                  <option key={option.id} value={option.id} disabled>{option.label}</option>
-                ))}
-              </optgroup>
             </select>
           </div>
 

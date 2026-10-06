@@ -3,7 +3,7 @@ export interface SpeakOptions { rate?: number; volume?: number; lang?: string; o
 const MAX_CHUNK = 180;
 
 /** Las voces de Chrome cortan los textos largos (~15 s), así que se leen por frases. */
-export function splitIntoChunks(text: string): string[] {
+function splitIntoChunks(text: string): string[] {
   // Solo se corta en puntuación seguida de espacio, para no partir números como 17.5.
   const sentences = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/);
   const chunks: string[] = [];

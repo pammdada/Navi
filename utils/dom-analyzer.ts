@@ -1,5 +1,9 @@
-const NOISE = 'script, style, noscript, template, svg, nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"], [role="complementary"], [aria-hidden="true"], [data-navi]';
-const MAIN_SELECTOR = 'main, [role="main"], #main-content, .main-content, [class*="main-content" i], [class*="page-content" i]';
+// Enlaces fijos del menú lateral de UTP Class (class.utp.edu.pe): no son contenido de la página.
+const MENU_LINKS = ['/student/courses', '/student/messages', '/student/calendar', '/student/help', '/student/configuration', '/my-profile', '/logout'].map((href) => `a[href="${href}"]`).join(', ');
+const NOISE = `script, style, noscript, template, svg, nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"], [role="complementary"], [aria-hidden="true"], [data-navi], button[aria-label="Ocultar banners"], button[aria-label="Pausar carrusel"], ${MENU_LINKS}`;
+/** Landmark principal declarado por la página (o agregado por Navi). */
+export const MAIN_LANDMARK = 'main, [role="main"]';
+const MAIN_SELECTOR = `${MAIN_LANDMARK}, #main-content, .main-content, [class*="main-content" i], [class*="page-content" i]`;
 const HEADINGS = 'h1, h2, h3, [role="heading"]';
 const TEXT_BLOCKS = 'p, span, li, a, td, th, label, button, strong, em, pre, blockquote, h1, h2, h3, h4, h5, h6';
 

@@ -1,13 +1,10 @@
-import { UTP_HOST, resolveSafeUrl, safeRoutes, type SafeRouteId } from './navigation';
+import { NEEDS_COURSE_MESSAGE, isUtpUrl, resolveSafeUrl, type SafeRouteId } from './navigation';
 
 const CONTENT_SCRIPT = '/content-scripts/utp-content.js';
 const CONTENT_STYLES = '/content-scripts/utp-content.css';
 
-export class PageBridgeError extends Error {
-  constructor(public reason: 'no-tab' | 'wrong-site' | 'unreachable' | 'blocked', message: string) {
-    super(message);
-  }
-}
+/** Error con un mensaje listo para mostrarle al usuario (ver bridgeErrorMessage). */
+export class PageBridgeError extends Error {}
 
 async function getActiveTab() {
   const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
@@ -16,22 +13,20 @@ async function getActiveTab() {
 
 async function getActiveUtpTab(): Promise<number> {
   const tab = await getActiveTab();
-  if (!tab?.id) throw new PageBridgeError('no-tab', 'No encontré una pestaña activa.');
-  const host = tab.url ? new URL(tab.url).hostname : '';
-  if (host !== UTP_HOST) throw new PageBridgeError('wrong-site', 'Abre UTP Class (class.utp.edu.pe) para usar esta función.');
+  if (!tab?.id) throw new PageBridgeError('No encontré una pestaña activa.');
+  if (!isUtpUrl(tab.url)) throw new PageBridgeError('Abre UTP Class (class.utp.edu.pe) para usar esta función.');
   return tab.id;
 }
 
 /**
- * Abre una de las rutas fijas y verificadas de UTP Class. En una pestaña de UTP Class la reemplaza;
+ * Abre una de las rutas fijas de UTP Class (global, o pestaña del curso abierto). En una pestaña de UTP Class la reemplaza;
  * desde cualquier otra pestaña abre UTP Class en una pestaña nueva.
  */
 export async function openSafeRoute(id: SafeRouteId): Promise<void> {
-  const url = resolveSafeUrl(id);
-  if (!url) throw new PageBridgeError('blocked', `${safeRoutes[id].label} todavía no está disponible: falta validar la ruta con UTP Class.`);
   const tab = await getActiveTab();
-  const onUtp = tab?.id && tab.url && new URL(tab.url).hostname === UTP_HOST;
-  if (onUtp) await browser.tabs.update(tab.id!, { url });
+  const url = resolveSafeUrl(id, tab?.url);
+  if (!url) throw new PageBridgeError(NEEDS_COURSE_MESSAGE);
+  if (tab?.id && isUtpUrl(tab.url)) await browser.tabs.update(tab.id, { url });
   else await browser.tabs.create({ url });
 }
 
@@ -56,9 +51,9 @@ export async function sendToPage<T>(message: unknown): Promise<T> {
       await browser.scripting.insertCSS({ target: { tabId }, files: [CONTENT_STYLES] });
       await browser.scripting.executeScript({ target: { tabId }, files: [CONTENT_SCRIPT] });
     } catch {
-      throw new PageBridgeError('unreachable', 'No pude conectarme con la página. Recárgala e inténtalo otra vez.');
+      throw new PageBridgeError('No pude conectarme con la página. Recárgala e inténtalo otra vez.');
     }
-    if (!(await contentScriptReady(tabId))) throw new PageBridgeError('unreachable', 'No pude conectarme con la página. Recárgala e inténtalo otra vez.');
+    if (!(await contentScriptReady(tabId))) throw new PageBridgeError('No pude conectarme con la página. Recárgala e inténtalo otra vez.');
   }
   return (await browser.tabs.sendMessage(tabId, message)) as T;
 }

@@ -18,7 +18,7 @@ export interface AiSummaryResult {
   suggestedActions: string[];
 }
 
-export const MAX_PAYLOAD_CHARS = 6000;
+const MAX_PAYLOAD_CHARS = 6000;
 const MAX_RESPONSE_CHARS = 20000;
 const TIMEOUT_MS = 25000;
 

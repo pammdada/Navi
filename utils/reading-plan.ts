@@ -31,9 +31,9 @@ const DATE_PATTERN = new RegExp(
 );
 // La palabra debe abrir el texto ("Tarea 2: …", "Foro de la semana 5"): así "La fecha de entrega vence…" cuenta como fecha, no como actividad.
 const TASK_PATTERN = /^[\s\-•·\d.)]*(tarea|actividad|entregable|entrega|pr[aá]ctica|evaluaci[oó]n|examen|cuestionario|trabajo|foro|laboratorio)\b/i;
-const CHROME_PATTERN = /^(ver m[aá]s|m[aá]s|men[uú]|cerrar|volver|siguiente|anterior|ir|buscar|aceptar|cancelar|expandir|contraer)$/i;
+const CHROME_PATTERN = /^(ver m[aá]s|m[aá]s|men[uú]|cerrar|volver|siguiente|anterior|ir|buscar|aceptar|cancelar|expandir|contraer|ir a la actividad|ocultar banners|pausar carrusel)$/i;
 
-export const hasDate = (text: string): boolean => DATE_PATTERN.test(text);
+const hasDate = (text: string): boolean => DATE_PATTERN.test(text);
 export const isChromeText = (text: string): boolean => CHROME_PATTERN.test(text.trim());
 
 export function classifyText(text: string, tag: 'heading' | 'link' | 'block'): ReadingUnitType {
@@ -47,7 +47,7 @@ export function classifyText(text: string, tag: 'heading' | 'link' | 'block'): R
 const shorten = (text: string, max = 80) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 
 /** Cada encabezado inicia una sección; lo que está antes del primer encabezado forma una sección con el título de la página. */
-export function buildSections(title: string, units: ReadingUnit[]): ReadingSection[] {
+function buildSections(title: string, units: ReadingUnit[]): ReadingSection[] {
   const sections: ReadingSection[] = [];
   for (const unit of units) {
     if (unit.type === 'heading') {

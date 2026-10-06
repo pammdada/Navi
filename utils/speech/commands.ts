@@ -1,5 +1,6 @@
-import type { CommandAction, CustomCommand } from '../storage';
-import { safeRoutes, type SafeRouteId } from '../navigation.ts';
+import type { CustomCommand } from '../storage';
+import { safeRoutes } from '../navigation.ts';
+import { calendarActions, routeActions, type CommandAction } from './actions.ts';
 
 export type VoiceCommand = CommandAction | 'stop' | 'unknown';
 
@@ -13,12 +14,31 @@ export interface CommandDefinition {
 export const normalizeCommand = (value: string): string =>
   value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('es').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 
+const routeCommandDefinitions: CommandDefinition[] = Object.entries(routeActions).map(([id, { route, phrase, words }]) => {
+  const { scope, label } = safeRoutes[route];
+  const matcher = new RegExp(`^((ir|ve|vamos) (a|al) |abrir |ver )?(${words})$`);
+  return {
+    id: id as keyof typeof routeActions,
+    phrase,
+    description: scope === 'course' ? `Abre ${label.toLowerCase()} del curso que tienes abierto.` : `Abre ${label}.`,
+    matches: (text) => matcher.test(text),
+  };
+});
+
+const calendarCommandDefinitions: CommandDefinition[] = Object.entries(calendarActions).map(([id, { phrase, description, pattern }]) => ({
+  id: id as keyof typeof calendarActions,
+  phrase,
+  description,
+  matches: (text) => pattern.test(text),
+}));
+
 /** Comandos que trae Navi. "Detener" siempre existe y no se puede reemplazar por un comando personal. */
-export const commandCatalog: CommandDefinition[] = [
+const commandCatalog: CommandDefinition[] = [
   { id: 'read-page', phrase: 'Leer página', description: 'Lee el contenido principal, sección por sección.', matches: (text) => /^(leer|escuchar)( la)?( pagina| contenido)?$/.test(text) },
   { id: 'stop', phrase: 'Detener', description: 'Detiene la lectura.', matches: (text) => /^(detener|parar|silencio)$/.test(text) },
   { id: 'read-summary', phrase: 'Resumen de página', description: 'Cuenta lo más importante de la página.', matches: (text) => /(resumen|donde estoy|que hay)/.test(text) },
-  { id: 'go-courses', phrase: 'Ir a cursos', description: 'Abre Mis cursos.', matches: (text) => /^(ir a |abrir )?(mis )?(cursos|curso|courses)$/.test(text) },
+  ...routeCommandDefinitions,
+  ...calendarCommandDefinitions,
   { id: 'increase-font', phrase: 'Aumentar letra', description: 'Agranda el texto.', matches: (text) => /(aumentar|agrandar) (la )?(letra|texto)/.test(text) },
   { id: 'toggle-contrast', phrase: 'Alto contraste', description: 'Activa o desactiva el alto contraste.', matches: (text) => /(alto contraste|contraste)/.test(text) },
   { id: 'toggle-simplified', phrase: 'Modo simple', description: 'Muestra solo lo esencial.', matches: (text) => /(modo simple|modo simplificado)/.test(text) },
@@ -36,37 +56,17 @@ export function resolveVoiceCommand(transcript: string, personalCommands: Custom
 
 export const describeCommand = (command: VoiceCommand): string => commandCatalog.find((item) => item.id === command)?.description ?? 'No reconocí ese comando.';
 
-const pendingRoutePatterns: [SafeRouteId, RegExp][] = [
-  ['tasks', /(ir a|abrir|ver) (mis )?(tareas|tarea|actividades)/],
-  ['grades', /(ir a|abrir|ver) (mis )?(notas|calificaciones)/],
-  ['announcements', /(ir a|abrir|ver) (los |mis )?(anuncios|avisos)/],
-];
-
-/** Detecta pedidos como "ir a tareas": se reconocen para poder explicar que aún no están disponibles. */
-export function detectPendingRoute(transcript: string): SafeRouteId | null {
-  const text = normalizeCommand(transcript);
-  return pendingRoutePatterns.find(([, pattern]) => pattern.test(text))?.[0] ?? null;
-}
-
-export const pendingRouteMessage = (id: SafeRouteId): string => `${safeRoutes[id].label} todavía no está disponible: falta validar esa ruta con UTP Class.`;
-
 // ---- Comandos personales (Centro Navi → Mis comandos) ----
 
 /** Acciones permitidas. Un comando personal nunca puede abrir URLs libres, ejecutar código ni usar selectores. */
 export const customActionOptions: { id: CommandAction; label: string; defaultResponse: string }[] = [
   { id: 'read-page', label: 'Leer página', defaultResponse: 'Leyendo la página.' },
   { id: 'read-summary', label: 'Leer resumen', defaultResponse: 'Este es el resumen de la página.' },
-  { id: 'go-courses', label: 'Ir a cursos', defaultResponse: 'Abriendo tus cursos.' },
+  ...Object.entries(routeActions).map(([id, { phrase, message }]) => ({ id: id as keyof typeof routeActions, label: phrase, defaultResponse: message })),
   { id: 'toggle-contrast', label: 'Activar o quitar el alto contraste', defaultResponse: 'Contraste actualizado.' },
   { id: 'toggle-simplified', label: 'Activar o quitar el modo simplificado', defaultResponse: 'Modo simplificado actualizado.' },
   { id: 'increase-font', label: 'Ampliar texto', defaultResponse: 'Tamaño de letra actualizado.' },
   { id: 'guided-reading', label: 'Activar lectura guiada', defaultResponse: 'Iniciando lectura guiada.' },
-];
-
-/** Acciones que se habilitarán cuando su ruta esté verificada (ver utils/navigation.ts). */
-export const pendingCustomActions: { id: SafeRouteId; label: string }[] = [
-  { id: 'tasks', label: 'Ir a tareas' },
-  { id: 'grades', label: 'Ir a notas' },
 ];
 
 export const defaultResponseFor = (action: CommandAction): string => customActionOptions.find((item) => item.id === action)?.defaultResponse ?? '';

@@ -5,18 +5,12 @@
 //   customCommands           → frases personales del usuario (Centro Navi → Mis comandos)
 //   aiSummarySettings        → configuración (opcional) del resumen con IA
 import { storage } from '#imports';
-import { defaultValues } from './preferences';
+import { defaultPreferences } from './preferences';
+import type { CommandAction } from './speech/actions.ts';
 
 export type FontSize = 'normal' | 'large' | 'x-large';
 export type ColorVisionMode = 'standard' | 'high-contrast' | 'red-green-safe' | 'blue-yellow-safe';
-export type CommandAction =
-  | 'read-page'
-  | 'read-summary'
-  | 'go-courses'
-  | 'toggle-contrast'
-  | 'toggle-simplified'
-  | 'increase-font'
-  | 'guided-reading';
+export type { CommandAction } from './speech/actions.ts';
 
 export interface AccessibilityPreferences {
   fontSize: FontSize;
@@ -33,7 +27,7 @@ export interface AccessibilityPreferences {
 }
 
 // Los valores por defecto viven en preferences.ts (módulo sin dependencias, también usado en pruebas).
-export const defaultPreferences: AccessibilityPreferences = defaultValues;
+export { defaultPreferences };
 
 export const accessibilityPreferences = storage.defineItem<AccessibilityPreferences>(
   'sync:accessibility-preferences',

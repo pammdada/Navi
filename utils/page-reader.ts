@@ -1,3 +1,5 @@
+import { calendarReadingItems, calendarTitle } from './calendar';
+import { scrapeCalendar } from './page-calendar';
 import { clean, findMainContainer, getPageTitle, isNoise, isVisible, readableText } from './dom-analyzer';
 import { MAX_UNITS, classifyText, createReadingPlan, isChromeText, type ReadingPlan, type ReadingUnit } from './reading-plan';
 
@@ -23,8 +25,23 @@ const ownText = (element: Element): string =>
  * y enlaces). Omite menús, pies, contenido oculto, controles repetidos y texto duplicado, y marca cada elemento
  * leído para poder resaltarlo.
  */
+/** El calendario (FullCalendar) no se lee con la heurística general: se lee por día, con un bloque por clase o actividad. */
+function buildCalendarReadingPlan(): ReadingPlan | null {
+  const calendar = scrapeCalendar();
+  if (!calendar) return null;
+  const units: ReadingUnit[] = calendarReadingItems(calendar.week).map((item, i) => {
+    const element = (item.eventIndex === undefined ? calendar.elements.days[item.dayIndex] : calendar.elements.events[item.dayIndex]?.[item.eventIndex]) ?? null;
+    const elementId = `navi-reading-${i + 1}`;
+    element?.setAttribute(MARK, elementId);
+    return { id: `u${i + 1}`, type: classifyText(item.text, item.kind === 'heading' ? 'heading' : 'block'), text: item.text, elementId };
+  });
+  return units.length ? createReadingPlan(calendarTitle(calendar.week), false, units) : null;
+}
+
 export function buildReadingPlan(): ReadingPlan {
   clearReadingMarks();
+  const calendarPlan = buildCalendarReadingPlan();
+  if (calendarPlan) return calendarPlan;
   const main = findMainContainer();
   const units: ReadingUnit[] = [];
   const consumed = new Set<Element>();

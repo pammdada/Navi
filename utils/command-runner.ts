@@ -1,6 +1,8 @@
-import { defaultResponseFor, detectPendingRoute, pendingRouteMessage, type VoiceCommand } from './speech/commands.ts';
+import { calendarActions, isCalendarAction, isRouteAction, routeActions, type CalendarOp, type CommandAction } from './speech/actions.ts';
+import { defaultResponseFor, type VoiceCommand } from './speech/commands.ts';
+import type { SafeRouteId } from './navigation.ts';
 import { mergePreferences, nextFontSize } from './preferences.ts';
-import type { AccessibilityPreferences, CommandAction, CustomCommand } from './storage';
+import type { AccessibilityPreferences, CustomCommand } from './storage';
 
 /** Lo que un comando necesita del entorno (panel, pruebas...). Así la lógica no depende de React ni del navegador. */
 export interface CommandContext {
@@ -9,7 +11,10 @@ export interface CommandContext {
   /** Inicia la lectura de la página. Devuelve el mensaje de estado. */
   startReading: (mode: 'continuous' | 'stepped') => Promise<string>;
   readSummary: () => Promise<string>;
-  openCourses: () => Promise<void>;
+  /** Abre una ruta fija de UTP Class (ver utils/navigation.ts). Falla con un mensaje claro si falta abrir un curso. */
+  openRoute: (route: SafeRouteId) => Promise<void>;
+  /** Lee o mueve el calendario de UTP Class. Devuelve la frase para mostrar y leer en voz alta. */
+  calendar: (op: CalendarOp) => Promise<string>;
   stopReading: () => void;
   speak: (text: string) => void;
 }
@@ -20,6 +25,12 @@ const onOff = (value: boolean, label: string) => `${label} ${value ? 'activado' 
 
 async function runAction(action: CommandAction | 'stop', ctx: CommandContext): Promise<{ message: string; speakIt: boolean }> {
   const { preferences } = ctx;
+  if (isRouteAction(action)) {
+    const target = routeActions[action];
+    await ctx.openRoute(target.route);
+    return { message: target.message, speakIt: true };
+  }
+  if (isCalendarAction(action)) return { message: await ctx.calendar(calendarActions[action].op), speakIt: true };
   switch (action) {
     case 'read-page':
       return { message: await ctx.startReading('continuous'), speakIt: false };
@@ -30,9 +41,6 @@ async function runAction(action: CommandAction | 'stop', ctx: CommandContext): P
     case 'stop':
       ctx.stopReading();
       return { message: 'Lectura detenida.', speakIt: false };
-    case 'go-courses':
-      await ctx.openCourses();
-      return { message: 'Abriendo tus cursos.', speakIt: true };
     case 'toggle-contrast': {
       const next = mergePreferences(preferences, { highContrast: !preferences.highContrast });
       await ctx.updatePreferences({ highContrast: next.highContrast });
@@ -54,10 +62,8 @@ async function runAction(action: CommandAction | 'stop', ctx: CommandContext): P
 export async function runCommand(command: VoiceCommand, ctx: CommandContext, options: { transcript?: string; custom?: CustomCommand } = {}): Promise<string> {
   try {
     if (command === 'unknown') {
-      const pending = options.transcript ? detectPendingRoute(options.transcript) : null;
-      const message = pending ? pendingRouteMessage(pending) : FALLBACK;
-      ctx.speak(message);
-      return message;
+      ctx.speak(FALLBACK);
+      return FALLBACK;
     }
     const { message, speakIt } = await runAction(command, ctx);
     const spoken = options.custom ? options.custom.response?.trim() || defaultResponseFor(options.custom.action) : message;

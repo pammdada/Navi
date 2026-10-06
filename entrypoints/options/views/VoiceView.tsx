@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquareText, Mic, MicOff, Square } from 'lucide-react';
-import { defaultResponseFor, describeCommand, detectPendingRoute, pendingCustomActions, pendingRouteMessage, resolveVoiceCommand, sanitizeStoredCommands, voiceCommandGuide } from '@/utils/speech/commands';
+import { defaultResponseFor, describeCommand, resolveVoiceCommand, sanitizeStoredCommands, voiceCommandGuide } from '@/utils/speech/commands';
 import { customCommands, type CustomCommand } from '@/utils/storage';
 import { isSpeechRecognitionSupported, startSpeechRecognition } from '@/utils/speech/recognition';
 import { speakWithPreferences } from '@/utils/speech/synthesis';
@@ -43,14 +43,11 @@ export function VoiceView() {
     stopRef.current = startSpeechRecognition(
       (heard) => {
         const { command, custom } = resolveVoiceCommand(heard, personal);
-        const pending = command === 'unknown' ? detectPendingRoute(heard) : null;
         const answer = custom
           ? custom.response || defaultResponseFor(custom.action)
-          : pending
-            ? pendingRouteMessage(pending)
-            : command === 'unknown'
-              ? 'No reconocí ese comando. Prueba con “leer página” o “ir a cursos”.'
-              : `Entendido. ${describeCommand(command)}`;
+          : command === 'unknown'
+            ? 'No reconocí ese comando. Prueba con “leer página” o “ir a cursos”.'
+            : `Entendido. ${describeCommand(command)}`;
         setTranscript(heard);
         setResponse(answer);
         speakWithPreferences(answer, preferences);
@@ -118,12 +115,6 @@ export function VoiceView() {
             <div key={phrase} className="rounded-2xl border border-line-soft p-4">
               <dt className="text-lg font-bold">"{phrase}"</dt>
               <dd className="text-ink-soft">{description}</dd>
-            </div>
-          ))}
-          {pendingCustomActions.map(({ id, label }) => (
-            <div key={id} className="rounded-2xl border border-dashed border-line p-4">
-              <dt className="text-lg font-bold">“{label}”</dt>
-              <dd className="text-ink-soft">Próximamente: se habilitará cuando se valide esa ruta con UTP Class.</dd>
             </div>
           ))}
         </dl>

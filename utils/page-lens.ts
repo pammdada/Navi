@@ -3,7 +3,7 @@
  * sin cambiar el tamaño de toda la página. Vive en un Shadow DOM con `all: initial`, por eso los estilos de
  * UTP Class —ni el modo de alto contraste de Navi— pueden romperla.
  */
-export const LENS_SCALES = [1.5, 2, 2.5] as const;
+const LENS_SCALES = [1.5, 2, 2.5] as const;
 export type LensScale = (typeof LENS_SCALES)[number];
 
 const HOST_ID = 'navi-lens-host';
@@ -45,7 +45,7 @@ let lens: LensState | null = null;
 export const isLensOpen = (): boolean => lens !== null;
 
 /** Texto que se amplía para un elemento: el de su bloque más cercano, recortado. */
-export function lensTextFor(target: EventTarget | null): string {
+function lensTextFor(target: EventTarget | null): string {
   const element = target instanceof Element ? target : null;
   if (!element || element.id === HOST_ID || element.closest(`#${HOST_ID}`)) return '';
   if (element instanceof HTMLImageElement) return (element.alt || element.title || '').trim().slice(0, MAX_CHARS);
@@ -82,13 +82,13 @@ function applyScale(state: LensState): void {
   });
 }
 
-export function closeLens(): void {
+function closeLens(): void {
   lens?.teardown();
   lens = null;
 }
 
 /** Abre la lupa. onClosed se llama cuando el usuario la cierra (botón o Esc), para avisar al panel. */
-export function openLens(onClosed?: () => void): void {
+function openLens(onClosed?: () => void): void {
   if (lens) return;
   const host = document.createElement('div');
   host.id = HOST_ID;

@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ALargeSmall, BookOpen, Captions, ClipboardCheck, Contrast, FileText, ListOrdered, Mic, Palette, Settings, Sparkles, Volume2, ZoomIn } from 'lucide-react';
+import { ALargeSmall, BookOpen, CalendarDays, Captions, ClipboardCheck, Contrast, FileText, GraduationCap, ListOrdered, Megaphone, MessageCircle, Mic, Palette, Settings, Sparkles, Volume2, ZoomIn, type LucideIcon } from 'lucide-react';
 import { NaviLogo } from '@/components/NaviLogo';
+import { usePreferencesStore } from '@/hooks/use-preferences-store';
 import { runCommand, type CommandContext } from '@/utils/command-runner';
-import { isRouteEnabled } from '@/utils/navigation';
+import { routeActions, type RouteAction } from '@/utils/speech/actions';
 import { bridgeErrorMessage, openSafeRoute, sendToPage } from '@/utils/page-bridge';
 import { colorModeLabel, colorModes, nextColorMode, nextFontSize } from '@/utils/preferences';
 import { fontSizeLabels } from '@/utils/profiles';
 import { createLocalSummary, summaryToSpeech, type LocalPageSummary, type ReadingPlan } from '@/utils/reading-plan';
-import { pendingRouteMessage, resolveVoiceCommand } from '@/utils/speech/commands';
+import { resolveVoiceCommand } from '@/utils/speech/commands';
 import { isSpeechRecognitionSupported, startSpeechRecognition } from '@/utils/speech/recognition';
 import { speakWithPreferences, stopSpeaking } from '@/utils/speech/synthesis';
 import { PanelButton, ReaderBar, Section, SummaryCard } from './components';
-import { useAiEndpoint, useCustomCommands, useGuidedReading, usePreferences, useProfileName } from './hooks';
+import { useAiEndpoint, useCustomCommands, useGuidedReading, useProfileName } from './hooks';
 
 const micErrors: Record<string, string> = {
   'not-allowed': 'Falta el permiso del micrófono. Se abrió el Centro Navi: permite el micrófono ahí y vuelve a intentarlo.',
@@ -20,10 +21,22 @@ const micErrors: Record<string, string> = {
   network: 'El reconocimiento de voz necesita conexión a internet.',
 };
 
+// Accesos a UTP Class. Destino y mensaje salen de routeActions (los mismos que usa la voz).
+const mainRoutes: { action: RouteAction; icon: LucideIcon; label: string; hint: string }[] = [
+  { action: 'go-courses', icon: BookOpen, label: 'Cursos', hint: 'Abrir mis cursos' },
+  { action: 'go-calendar', icon: CalendarDays, label: 'Ver horario', hint: 'Calendario' },
+];
+const courseRoutes: { action: RouteAction; icon: LucideIcon; label: string; hint: string }[] = [
+  { action: 'go-grades', icon: GraduationCap, label: 'Notas', hint: 'Del curso' },
+  { action: 'go-announcements', icon: Megaphone, label: 'Anuncios', hint: 'Del curso' },
+  { action: 'go-tasks', icon: ClipboardCheck, label: 'Tareas', hint: 'Del curso' },
+  { action: 'go-chat', icon: MessageCircle, label: 'Chat', hint: 'Mensajes' },
+];
+
 const state = (on: boolean) => (on ? 'Activo' : 'Desactivado');
 
 export default function SidePanel() {
-  const { preferences, ref: prefsRef, update } = usePreferences();
+  const { preferences, ref: prefsRef, update } = usePreferencesStore();
   const name = useProfileName();
   const customCommands = useCustomCommands();
   const aiEndpoint = useAiEndpoint();
@@ -106,7 +119,8 @@ export default function SidePanel() {
     updatePreferences: update,
     startReading: reading.start,
     readSummary: showSummary,
-    openCourses: () => openSafeRoute('courses'),
+    openRoute: openSafeRoute,
+    calendar: async (op) => (await sendToPage<{ message: string }>({ type: 'NAVI_CALENDAR', op })).message,
     stopReading: reading.stop,
     speak,
   });
@@ -149,7 +163,7 @@ export default function SidePanel() {
     );
   };
 
-  const tasksReady = isRouteEnabled('tasks');
+  const goTo = (action: RouteAction) => void guard(async () => { await openSafeRoute(routeActions[action].route); return routeActions[action].message; });
   const voiceOff = !preferences.voiceEnabled || !voiceSupported;
 
   return (
@@ -186,25 +200,14 @@ export default function SidePanel() {
       )}
 
       <Section title="Acciones rápidas">
-        <PanelButton
-          variant="large"
-          icon={BookOpen}
-          label="Cursos"
-          hint="Abrir mis cursos"
-          onClick={() => void guard(async () => { await openSafeRoute('courses'); return 'Abriendo tus cursos.'; })}
-        />
-        <PanelButton
-          variant="large"
-          icon={ClipboardCheck}
-          label="Tareas"
-          hint={tasksReady ? 'Ver mis tareas' : 'Próximamente'}
-          unavailable={!tasksReady}
-          onClick={() => void guard(async () => {
-            if (!tasksReady) return pendingRouteMessage('tasks');
-            await openSafeRoute('tasks');
-            return 'Abriendo tus tareas.';
-          })}
-        />
+        {mainRoutes.map(({ action, icon, label, hint }) => (
+          <PanelButton key={action} variant="large" icon={icon} label={label} hint={hint} onClick={() => goTo(action)} />
+        ))}
+        <div className="grid grid-cols-2 gap-2">
+          {courseRoutes.map(({ action, icon, label, hint }) => (
+            <PanelButton key={action} icon={icon} label={label} hint={hint} onClick={() => goTo(action)} />
+          ))}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <PanelButton icon={Contrast} label="Contraste" hint={state(preferences.highContrast)} pressed={preferences.highContrast} onClick={() => void update({ highContrast: !prefsRef.current.highContrast })} />
           <PanelButton

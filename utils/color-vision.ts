@@ -136,7 +136,7 @@ export function hueFamily(hue: number): HueFamily {
  *  - Azul/amarillo (tritanopía): el azul y el cian pasan a magenta (330°). Azul~verde sube de 4,4 a 20,5 y
  *    rojo~azul se mantiene en 12,5. Girar el amarillo no mejoraba nada, así que no se toca.
  */
-export const targetHues: Record<CvdMode, Partial<Record<HueFamily, number>>> = {
+const targetHues: Record<CvdMode, Partial<Record<HueFamily, number>>> = {
   'red-green-safe': { green: 200 },
   'blue-yellow-safe': { blue: 330, cyan: 330 },
 };
@@ -184,14 +184,9 @@ export function colorDifference(a: Rgb, b: Rgb): number {
   return 100 * Math.hypot(L1 - L2, a1 - a2, b1 - b2);
 }
 
-export const cvdKindsFor: Record<CvdMode, CvdKind[]> = {
-  'red-green-safe': ['protan', 'deutan'],
-  'blue-yellow-safe': ['tritan'],
-};
-
 // ---- Colores típicos de interfaz, para las vistas previas y las pruebas ----
 
-export const UI_SAMPLES = [
+const UI_SAMPLES = [
   { id: 'success', label: 'Correcto', hex: '#2e7d32' },
   { id: 'danger', label: 'Error', hex: '#c62828' },
   { id: 'warning', label: 'Aviso', hex: '#f9a825' },

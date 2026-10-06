@@ -1,6 +1,6 @@
 import type { AccessibilityPreferences, ColorVisionMode } from './storage';
 
-export const defaultValues: AccessibilityPreferences = {
+export const defaultPreferences: AccessibilityPreferences = {
   fontSize: 'normal',
   highContrast: false,
   colorVisionMode: 'standard',
@@ -18,9 +18,8 @@ export const defaultValues: AccessibilityPreferences = {
  * garantiza que highContrast y colorVisionMode no se contradigan.
  */
 export function normalizePreferences(value: Partial<AccessibilityPreferences> | null | undefined): AccessibilityPreferences {
-  const merged = { ...defaultValues, ...value };
-  const modes: ColorVisionMode[] = ['standard', 'high-contrast', 'red-green-safe', 'blue-yellow-safe'];
-  if (!modes.includes(merged.colorVisionMode)) merged.colorVisionMode = 'standard';
+  const merged = { ...defaultPreferences, ...value };
+  if (!colorModes.some((mode) => mode.id === merged.colorVisionMode)) merged.colorVisionMode = 'standard';
   // Datos antiguos: solo existía highContrast.
   if (merged.highContrast && merged.colorVisionMode === 'standard') merged.colorVisionMode = 'high-contrast';
   merged.highContrast = merged.colorVisionMode === 'high-contrast';

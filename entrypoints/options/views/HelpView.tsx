@@ -25,8 +25,8 @@ const faqs = [
     answer: 'El panel lateral funciona en UTP Class (class.utp.edu.pe). Tus ajustes se aplican ahí automáticamente.',
   },
   {
-    question: '¿Por qué “Tareas” dice “Próximamente”?',
-    answer: 'Navi solo te lleva a páginas de UTP Class que se probaron con una sesión real. Hoy está verificada la de Cursos; Tareas y Notas se habilitarán cuando se valide su ruta, para no llevarte a un lugar equivocado.',
+    question: '¿Por qué “Tareas” o “Notas” dicen que abra un curso?',
+    answer: 'Tareas, Evaluaciones, Foros, Notas, Anuncios y Sílabo son pestañas de cada curso. Abre primero un curso en UTP Class y Navi te llevará a la sección que pidas, siempre dentro de ese mismo curso.',
   },
   {
     question: '¿Cómo funciona la lectura guiada?',
@@ -38,7 +38,7 @@ const faqs = [
   },
   {
     question: '¿Puede un comando mío borrar o entregar algo?',
-    answer: 'No. Los comandos personales solo pueden usar acciones de una lista cerrada (leer, resumen, ir a cursos, contraste, modo simple, ampliar texto y lectura guiada).',
+    answer: 'No. Los comandos personales solo pueden usar acciones de una lista cerrada (leer, resumen, ir a cursos, tareas, notas y otras secciones, contraste, modo simple, ampliar texto y lectura guiada).',
   },
   {
     question: '¿Puedo deshacer un cambio?',

@@ -1,14 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { applyAccessibilityPreferences } from '@/utils/accessibility';
-import { mergePreferences, normalizePreferences } from '@/utils/preferences';
-import {
-  accessibilityPreferences,
-  defaultPreferences,
-  defaultUserProfile,
-  userProfile,
-  type AccessibilityPreferences,
-  type UserProfile,
-} from '@/utils/storage';
+import { usePreferencesStore } from '@/hooks/use-preferences-store';
+import { mergePreferences } from '@/utils/preferences';
+import { defaultPreferences, defaultUserProfile, userProfile, type AccessibilityPreferences, type UserProfile } from '@/utils/storage';
 
 export interface Notice {
   id: number;
@@ -32,44 +25,28 @@ interface NaviState {
 const NaviContext = createContext<NaviState | null>(null);
 
 // Los valores guardados por versiones anteriores pueden no tener los campos nuevos.
-const withPreferenceDefaults = normalizePreferences;
 const withProfileDefaults = (value: Partial<UserProfile> | null) => ({ ...defaultUserProfile, ...value });
 
 export function NaviProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
-  const [preferences, setPreferences] = useState<AccessibilityPreferences>(defaultPreferences);
+  const { preferences, loaded: preferencesLoaded, ref: preferencesRef, save: savePreferences } = usePreferencesStore();
   const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
-  const preferencesRef = useRef(preferences);
   const profileRef = useRef(profile);
-  preferencesRef.current = preferences;
   profileRef.current = profile;
+  const ready = preferencesLoaded && profileLoaded;
 
   useEffect(() => {
-    void Promise.all([accessibilityPreferences.getValue(), userProfile.getValue()]).then(([storedPreferences, storedProfile]) => {
-      setPreferences(withPreferenceDefaults(storedPreferences));
-      setProfile(withProfileDefaults(storedProfile));
-      setReady(true);
-    });
-    // Mantiene la página sincronizada con los cambios hechos desde el panel lateral.
-    const unwatchPreferences = accessibilityPreferences.watch((value) => setPreferences(withPreferenceDefaults(value)));
-    const unwatchProfile = userProfile.watch((value) => setProfile(withProfileDefaults(value)));
-    return () => {
-      unwatchPreferences();
-      unwatchProfile();
+    const accept = (value: Partial<UserProfile> | null) => {
+      setProfile(withProfileDefaults(value));
+      setProfileLoaded(true);
     };
+    void userProfile.getValue().then(accept);
+    return userProfile.watch(accept);
   }, []);
-
-  useEffect(() => applyAccessibilityPreferences(preferences), [preferences]);
 
   const notify = useCallback((message: string, undo?: () => void) => setNotice({ id: Date.now(), message, undo }), []);
   const dismissNotice = useCallback(() => setNotice(null), []);
-
-  const savePreferences = useCallback(async (next: AccessibilityPreferences) => {
-    preferencesRef.current = next;
-    setPreferences(next);
-    await accessibilityPreferences.setValue(next);
-  }, []);
 
   const updatePreferences = useCallback(
     async (updates: Partial<AccessibilityPreferences>, message?: string) => {
@@ -82,7 +59,7 @@ export function NaviProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [notify, savePreferences],
+    [notify, preferencesRef, savePreferences],
   );
 
   const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
@@ -99,7 +76,7 @@ export function NaviProvider({ children }: { children: ReactNode }) {
       void savePreferences(previous);
       notify('Cambio deshecho.');
     });
-  }, [notify, savePreferences]);
+  }, [notify, preferencesRef, savePreferences]);
 
   const value = useMemo(
     () => ({ ready, preferences, profile, notice, updatePreferences, updateProfile, resetPreferences, notify, dismissNotice }),

@@ -172,5 +172,3 @@ export function setColorVisionMode(next: ColorVisionMode): void {
   void scan([document.documentElement], cvd, generation);
 }
 
-/** Cuántos elementos tiene Navi modificados ahora mismo (para depurar y para las pruebas). */
-export const recoloredCount = (): number => document.querySelectorAll(`[${MARK}]`).length;
